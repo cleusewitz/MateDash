@@ -36,12 +36,26 @@ private val TextPrimary = Color.White
 private val TextSecondary = Color(0xFF8E8E93)
 private val ChargingBlue = Color(0xFF00C7FF)
 private val BatteryGreen = Color(0xFF34C759)
+private val BatteryYellow = Color(0xFFFFCC00)
 private val TeslaRed = Color(0xFFE31937)
+private val CostGold = Color(0xFFFFD60A)
 
 private fun Double.fmt1(): String {
     val rounded = (this * 10).roundToInt()
     return "${rounded / 10}.${abs(rounded % 10)}"
 }
+
+private fun Int.withComma(): String {
+    val s = toString()
+    val sb = StringBuilder()
+    for (i in s.indices) {
+        if (i > 0 && (s.length - i) % 3 == 0) sb.append(',')
+        sb.append(s[i])
+    }
+    return sb.toString()
+}
+
+private fun Double.fmt0Comma() = roundToInt().withComma()
 
 private fun formatDate(dateStr: String?): String {
     if (dateStr == null) return ""
@@ -54,6 +68,12 @@ private fun formatDate(dateStr: String?): String {
     } catch (_: Exception) {
         dateStr
     }
+}
+
+private fun chargeEfficiency(added: Double?, used: Double?): String? {
+    if (added == null || used == null || used <= 0.0) return null
+    val pct = (added / used * 100).roundToInt()
+    return "$pct%"
 }
 
 @Composable
@@ -100,13 +120,8 @@ fun ChargingScreen() {
                 )
             }
         } else {
-            item {
-                ChargeSummaryCard(charges)
-            }
-
-            items(charges) { charge ->
-                ChargeItem(charge)
-            }
+            item { ChargeSummaryCard(charges) }
+            items(charges) { charge -> ChargeItem(charge) }
         }
 
         item { Spacer(Modifier.height(24.dp)) }
@@ -117,10 +132,10 @@ fun ChargingScreen() {
 private fun ChargeSummaryCard(charges: List<ChargeDto>) {
     val totalCount = charges.size
     val totalEnergyKwh = charges.sumOf { it.chargeEnergyAdded ?: 0.0 }
+    val totalCost = charges.mapNotNull { it.cost }.takeIf { it.isNotEmpty() }?.sum()
     val totalMinutes = charges.sumOf { it.durationMin ?: 0 }
     val avgMinutes = if (totalCount > 0) totalMinutes / totalCount else 0
     val avgEnergy = if (totalCount > 0) totalEnergyKwh / totalCount else 0.0
-
     val avgHours = avgMinutes / 60
     val avgRemainMin = avgMinutes % 60
     val avgTimeStr = if (avgHours > 0) "${avgHours}h ${avgRemainMin}m" else "${avgRemainMin}m"
@@ -144,14 +159,17 @@ private fun ChargeSummaryCard(charges: List<ChargeDto>) {
         ) {
             ChargeSummaryItem("평균 충전시간", avgTimeStr)
             ChargeSummaryItem("평균 충전량", "${avgEnergy.fmt1()} kWh")
+            if (totalCost != null) {
+                ChargeSummaryItem("총 비용", "₩${totalCost.fmt0Comma()}", CostGold)
+            }
         }
     }
 }
 
 @Composable
-private fun ChargeSummaryItem(label: String, value: String) {
+private fun ChargeSummaryItem(label: String, value: String, color: Color = TextPrimary) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = color)
         Text(label, fontSize = 11.sp, color = TextSecondary)
     }
 }
@@ -163,46 +181,92 @@ private fun ChargeItem(charge: ChargeDto) {
     val endLevel = charge.batteryDetails?.endBatteryLevel ?: 0
     val durationStr = charge.durationStr ?: "${charge.durationMin ?: 0}분"
     val address = charge.address ?: "알 수 없는 위치"
+    val efficiency = chargeEfficiency(charge.chargeEnergyAdded, charge.chargeEnergyUsed)
+    val tempStr = charge.outsideTempAvg?.let { "${it.fmt1()}°C" }
+    val odometerStr = charge.odometer?.let { "${it.fmt0Comma()} km" }
+    val costStr = charge.cost?.let { "₩${it.fmt0Comma()}" }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(CardBg, RoundedCornerShape(16.dp))
             .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
-        Text(
-            text = address,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextPrimary,
-            maxLines = 2,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = formatDate(charge.startDate),
-            fontSize = 12.sp,
-            color = TextSecondary,
-        )
-        Spacer(Modifier.height(12.dp))
+        // 위치 + 주행거리
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top,
         ) {
-            ChargeStatChip(
-                label = "충전량",
-                value = "+${energyAdded.fmt1()} kWh",
-                color = BatteryGreen,
+            Text(
+                text = address,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = TextPrimary,
+                maxLines = 2,
+                modifier = Modifier.weight(1f),
             )
-            ChargeStatChip(
-                label = "배터리",
-                value = "$startLevel→$endLevel%",
-                color = ChargingBlue,
-            )
-            ChargeStatChip(
-                label = "시간",
-                value = durationStr,
+            if (odometerStr != null) {
+                Text(
+                    text = odometerStr,
+                    fontSize = 11.sp,
+                    color = TextSecondary,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(3.dp))
+
+        // 날짜 + 외기 온도
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = formatDate(charge.startDate),
+                fontSize = 12.sp,
                 color = TextSecondary,
             )
+            if (tempStr != null) {
+                Text(
+                    text = "🌡 $tempStr",
+                    fontSize = 12.sp,
+                    color = TextSecondary,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        // 주요 스탯
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            ChargeStatChip(label = "충전량", value = "+${energyAdded.fmt1()} kWh", color = BatteryGreen)
+            ChargeStatChip(label = "배터리", value = "$startLevel→$endLevel%", color = ChargingBlue)
+            ChargeStatChip(label = "시간", value = durationStr, color = TextSecondary)
+            if (efficiency != null) {
+                ChargeStatChip(label = "효율", value = efficiency, color = BatteryYellow)
+            }
+        }
+
+        // 비용 (있을 때만)
+        if (costStr != null) {
+            Spacer(Modifier.height(10.dp))
+            Box(
+                modifier = Modifier
+                    .background(CostGold.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            ) {
+                Text(
+                    text = "충전 비용 $costStr",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = CostGold,
+                )
+            }
         }
     }
 }
@@ -210,7 +274,7 @@ private fun ChargeItem(charge: ChargeDto) {
 @Composable
 private fun ChargeStatChip(label: String, value: String, color: Color) {
     Column {
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = color)
+        Text(value, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = color)
         Text(label, fontSize = 11.sp, color = TextSecondary)
     }
 }

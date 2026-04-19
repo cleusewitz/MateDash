@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
@@ -33,6 +32,9 @@ class TripViewModel : ViewModel() {
     private val _stats = MutableStateFlow(TripStats())
     val stats: StateFlow<TripStats> = _stats.asStateFlow()
 
+    private val _recentDrives = MutableStateFlow<List<DriveDto>>(emptyList())
+    val recentDrives: StateFlow<List<DriveDto>> = _recentDrives.asStateFlow()
+
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -53,6 +55,7 @@ class TripViewModel : ViewModel() {
             try {
                 val drives = ServiceLocator.apiClient.getDrives(config, limit = 200)
                 _stats.value = calculateStats(drives)
+                _recentDrives.value = drives.sortedByDescending { it.startDate }.take(20)
             } catch (e: Exception) {
                 _errorMessage.value = e.message
             } finally {
@@ -65,10 +68,10 @@ class TripViewModel : ViewModel() {
         if (drives.isEmpty()) return TripStats()
 
         val tz = TimeZone.currentSystemDefault()
-        val now = Clock.System.now().toLocalDateTime(tz).date
+        val now = kotlin.time.Clock.System.now().toLocalDateTime(tz).date
         val weekAgo = now.minus(6, DateTimeUnit.DAY)
-        val monthPrefix = "${now.year}-${now.monthNumber.toString().padStart(2, '0')}"
-        val todayPrefix = "$monthPrefix-${now.dayOfMonth.toString().padStart(2, '0')}"
+        val monthPrefix = "${now.year}-${(now.month.ordinal + 1).toString().padStart(2, '0')}"
+        val todayPrefix = "$monthPrefix-${now.day.toString().padStart(2, '0')}"
         val weekStr = weekAgo.toString()
 
         val drivesWithDate = drives.filter { !it.startDate.isNullOrEmpty() }

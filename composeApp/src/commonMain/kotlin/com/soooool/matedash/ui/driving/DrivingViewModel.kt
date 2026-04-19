@@ -19,8 +19,13 @@ class DrivingViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    init {
-        loadDrives()
+    private var loaded = false
+
+    fun loadDrivesIfNeeded() {
+        if (!loaded) {
+            loaded = true
+            loadDrives()
+        }
     }
 
     fun loadDrives() {

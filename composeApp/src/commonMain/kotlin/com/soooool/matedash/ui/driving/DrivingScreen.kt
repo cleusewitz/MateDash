@@ -1,15 +1,20 @@
 package com.soooool.matedash.ui.driving
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,12 +44,23 @@ private val ChargingBlue = Color(0xFF00C7FF)
 private val BatteryGreen = Color(0xFF34C759)
 private val TeslaRed = Color(0xFFE31937)
 
-private fun Double.fmt1(): String {
-    val rounded = (this * 10).roundToInt()
-    return "${rounded / 10}.${abs(rounded % 10)}"
+private fun Int.withComma(): String {
+    val neg = this < 0
+    val s = (if (neg) -this else this).toString()
+    val sb = StringBuilder()
+    for (i in s.indices) {
+        if (i > 0 && (s.length - i) % 3 == 0) sb.append(',')
+        sb.append(s[i])
+    }
+    return if (neg) "-$sb" else sb.toString()
 }
 
-private fun Double.fmt0() = roundToInt().toString()
+private fun Double.fmt1(): String {
+    val rounded = (this * 10).roundToInt()
+    return "${(rounded / 10).withComma()}.${abs(rounded % 10)}"
+}
+
+private fun Double.fmt0() = roundToInt().withComma()
 
 private fun formatDate(dateStr: String?): String {
     if (dateStr == null) return ""
@@ -66,14 +83,24 @@ fun DrivingScreen() {
     val isLoading by vm.isLoading.collectAsState()
     val errorMsg by vm.errorMessage.collectAsState()
 
+    // 화면 진입 시 데이터 로드
+    LaunchedEffect(Unit) {
+        vm.loadDrivesIfNeeded()
+        if (drives.isEmpty() && !isLoading && errorMsg != null) {
+            vm.loadDrives()
+        }
+    }
+
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
             .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(top = statusBarTop + 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Spacer(Modifier.height(16.dp)) }
 
         item {
             Text(
@@ -95,12 +122,26 @@ fun DrivingScreen() {
             }
         } else if (errorMsg != null) {
             item {
-                Text(
-                    text = "⚠️ $errorMsg",
-                    color = TeslaRed,
-                    fontSize = 13.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        text = "⚠️ $errorMsg",
+                        color = TeslaRed,
+                        fontSize = 13.sp,
+                    )
+                    Text(
+                        text = "다시 시도",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = ChargingBlue,
+                        modifier = Modifier
+                            .clickable { vm.loadDrives() }
+                            .padding(8.dp),
+                    )
+                }
             }
         } else {
             // 요약 카드 (최근 기록 기반)
@@ -113,7 +154,7 @@ fun DrivingScreen() {
             }
         }
 
-        item { Spacer(Modifier.height(24.dp)) }
+        item { Spacer(Modifier.height(100.dp)) }
     }
 }
 
@@ -192,11 +233,27 @@ private fun DriveItem(drive: DriveDto) {
             }
         }
         Spacer(Modifier.height(4.dp))
-        Text(
-            text = formatDate(drive.startDate),
-            fontSize = 12.sp,
-            color = TextSecondary,
-        )
+        // 출발/도착 시간
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "출발 ${formatDate(drive.startDate)}",
+                fontSize = 12.sp,
+                color = TextSecondary,
+            )
+            Text(
+                text = " → ",
+                fontSize = 12.sp,
+                color = TextSecondary,
+            )
+            Text(
+                text = "도착 ${formatDate(drive.endDate)}",
+                fontSize = 12.sp,
+                color = TextSecondary,
+            )
+        }
         Spacer(Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -205,6 +262,12 @@ private fun DriveItem(drive: DriveDto) {
             StatChip(label = "거리", value = "${distanceKm.fmt1()} km", color = ChargingBlue)
             StatChip(label = "에너지", value = "${energyKwh.fmt1()} kWh", color = BatteryGreen)
             StatChip(label = "시간", value = durationStr, color = TextSecondary)
+            // 배터리 소모
+            val startBat = drive.batteryDetails?.startBatteryLevel
+            val endBat = drive.batteryDetails?.endBatteryLevel
+            if (startBat != null && endBat != null) {
+                StatChip(label = "배터리", value = "${startBat}→${endBat}% (-${startBat - endBat}%)", color = TeslaRed)
+            }
         }
     }
 }

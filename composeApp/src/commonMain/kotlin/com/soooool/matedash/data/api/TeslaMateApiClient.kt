@@ -3,6 +3,7 @@ package com.soooool.matedash.data.api
 import com.soooool.matedash.data.model.ApiConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -17,6 +18,11 @@ class TeslaMateApiClient {
                 ignoreUnknownKeys = true
                 isLenient = true
             })
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30_000
+            connectTimeoutMillis = 15_000
+            socketTimeoutMillis = 30_000
         }
     }
 
@@ -46,7 +52,16 @@ class TeslaMateApiClient {
         return response.data?.drives ?: emptyList()
     }
 
-    suspend fun getCharges(config: ApiConfig, limit: Int = 20): List<ChargeDto> {
+    suspend fun getUpdates(config: ApiConfig): List<UpdateDto> {
+        val response: UpdatesResponse = httpClient.get(
+            "${config.baseUrl}/api/v1/cars/${config.carId}/updates"
+        ) {
+            if (config.apiToken.isNotBlank()) header(HttpHeaders.Authorization, "Bearer ${config.apiToken}")
+        }.body()
+        return response.data?.updates ?: emptyList()
+    }
+
+    suspend fun getCharges(config: ApiConfig, limit: Int = 100): List<ChargeDto> {
         val response: ChargesResponse = httpClient.get(
             "${config.baseUrl}/api/v1/cars/${config.carId}/charges?limit=$limit"
         ) {

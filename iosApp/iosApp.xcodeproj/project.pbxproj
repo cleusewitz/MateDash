@@ -6,7 +6,36 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AA1B2C3D4E5F6A7B8C9D0E0D /* MateDashWidgetsExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F6A7B8C9D0E01 /* MateDashWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA1B2C3D4E5F6A7B8C9D0E0A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6CFFEFA9B5BB8B237FDD0DA4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA1B2C3D4E5F6A7B8C9D0E05;
+			remoteInfo = MateDashWidgetsExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AA1B2C3D4E5F6A7B8C9D0E0C /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AA1B2C3D4E5F6A7B8C9D0E0D /* MateDashWidgetsExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		AA1B2C3D4E5F6A7B8C9D0E01 /* MateDashWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MateDashWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF86D7813CE3E7A217326FF2 /* MateDash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MateDash.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -18,9 +47,40 @@
 			);
 			target = FBBBDF94420753B1A13F7E2A /* iosApp */;
 		};
+		6E102F422F93C749003116AA /* Exceptions for "MateDashWidgets" folder in "iosApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				LiveActivity/ChargingActivityAttributes.swift,
+				LiveActivity/ChargingLiveActivity.swift,
+				LiveActivity/DrivingActivityAttributes.swift,
+				LiveActivity/DrivingLiveActivity.swift,
+			);
+			target = FBBBDF94420753B1A13F7E2A /* iosApp */;
+		};
+		AA1B2C3D4E5F6A7B8C9D0E0E /* Exceptions for "MateDashWidgets" folder in "MateDashWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AA1B2C3D4E5F6A7B8C9D0E05 /* MateDashWidgetsExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		AA1B2C3D4E5F6A7B8C9D0E09 /* MateDashWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				6E102F422F93C749003116AA /* Exceptions for "MateDashWidgets" folder in "iosApp" target */,
+				AA1B2C3D4E5F6A7B8C9D0E0E /* Exceptions for "MateDashWidgets" folder in "MateDashWidgetsExtension" target */,
+			);
+			path = MateDashWidgets;
+			sourceTree = "<group>";
+		};
+		BAF483F320B2096A7FCE246F /* Configuration */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Configuration;
+			sourceTree = "<group>";
+		};
 		EC28150D0269AC64B00627FB /* iosApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -29,14 +89,16 @@
 			path = iosApp;
 			sourceTree = "<group>";
 		};
-		BAF483F320B2096A7FCE246F /* Configuration */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Configuration;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		AA1B2C3D4E5F6A7B8C9D0E03 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DE2AA5283D7674D1B18C0AD4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -52,6 +114,7 @@
 			children = (
 				BAF483F320B2096A7FCE246F /* Configuration */,
 				EC28150D0269AC64B00627FB /* iosApp */,
+				AA1B2C3D4E5F6A7B8C9D0E09 /* MateDashWidgets */,
 				791DCB2F7B36580423DB46CD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -60,6 +123,7 @@
 			isa = PBXGroup;
 			children = (
 				AF86D7813CE3E7A217326FF2 /* MateDash.app */,
+				AA1B2C3D4E5F6A7B8C9D0E01 /* MateDashWidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -67,6 +131,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		AA1B2C3D4E5F6A7B8C9D0E05 /* MateDashWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA1B2C3D4E5F6A7B8C9D0E06 /* Build configuration list for PBXNativeTarget "MateDashWidgetsExtension" */;
+			buildPhases = (
+				AA1B2C3D4E5F6A7B8C9D0E02 /* Sources */,
+				AA1B2C3D4E5F6A7B8C9D0E03 /* Frameworks */,
+				AA1B2C3D4E5F6A7B8C9D0E04 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AA1B2C3D4E5F6A7B8C9D0E09 /* MateDashWidgets */,
+			);
+			name = MateDashWidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = MateDashWidgetsExtension;
+			productReference = AA1B2C3D4E5F6A7B8C9D0E01 /* MateDashWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		FBBBDF94420753B1A13F7E2A /* iosApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 155B6706D9603BF3BDACDD55 /* Build configuration list for PBXNativeTarget "iosApp" */;
@@ -75,10 +161,12 @@
 				01B407F8682825B0A21DA96E /* Sources */,
 				DE2AA5283D7674D1B18C0AD4 /* Frameworks */,
 				A11CA1180286594E0E1F37AB /* Resources */,
+				AA1B2C3D4E5F6A7B8C9D0E0C /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AA1B2C3D4E5F6A7B8C9D0E0B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				EC28150D0269AC64B00627FB /* iosApp */,
@@ -100,6 +188,9 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+					AA1B2C3D4E5F6A7B8C9D0E05 = {
+						CreatedOnToolsVersion = 16.2;
+					};
 					FBBBDF94420753B1A13F7E2A = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -120,12 +211,20 @@
 			projectRoot = "";
 			targets = (
 				FBBBDF94420753B1A13F7E2A /* iosApp */,
+				AA1B2C3D4E5F6A7B8C9D0E05 /* MateDashWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A11CA1180286594E0E1F37AB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA1B2C3D4E5F6A7B8C9D0E04 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -164,9 +263,82 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA1B2C3D4E5F6A7B8C9D0E02 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		AA1B2C3D4E5F6A7B8C9D0E0B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA1B2C3D4E5F6A7B8C9D0E05 /* MateDashWidgetsExtension */;
+			targetProxy = AA1B2C3D4E5F6A7B8C9D0E0A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		044508CBAA500F95384A1C7F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
+				DEVELOPMENT_TEAM = 4UZD57F52C;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		10348C60ECB32314CB788337 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
+				DEVELOPMENT_TEAM = 4UZD57F52C;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = iosApp/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		234B5ABD2096CD1BF6AD7E95 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = BAF483F320B2096A7FCE246F /* Configuration */;
@@ -290,56 +462,52 @@
 			};
 			name = Release;
 		};
-		044508CBAA500F95384A1C7F /* Debug */ = {
+		AA1B2C3D4E5F6A7B8C9D0E07 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = arm64;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_ENTITLEMENTS = MateDashWidgets/MateDashWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
-				ENABLE_PREVIEWS = YES;
+				DEVELOPMENT_TEAM = 4UZD57F52C;
+				FRAMEWORK_SEARCH_PATHS = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = MateDashWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MateDashWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
 				);
+				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.soooool.matedash.MateDash.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
-		10348C60ECB32314CB788337 /* Release */ = {
+		AA1B2C3D4E5F6A7B8C9D0E08 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = arm64;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_ENTITLEMENTS = MateDashWidgets/MateDashWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
-				ENABLE_PREVIEWS = YES;
+				DEVELOPMENT_TEAM = 4UZD57F52C;
+				FRAMEWORK_SEARCH_PATHS = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = MateDashWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = MateDashWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
 				);
+				OTHER_LDFLAGS = "";
+				PRODUCT_BUNDLE_IDENTIFIER = com.soooool.matedash.MateDash.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -349,6 +517,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		155B6706D9603BF3BDACDD55 /* Build configuration list for PBXNativeTarget "iosApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				044508CBAA500F95384A1C7F /* Debug */,
+				10348C60ECB32314CB788337 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		2315950FF7C58DDECB9BE095 /* Build configuration list for PBXProject "iosApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -358,11 +535,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		155B6706D9603BF3BDACDD55 /* Build configuration list for PBXNativeTarget "iosApp" */ = {
+		AA1B2C3D4E5F6A7B8C9D0E06 /* Build configuration list for PBXNativeTarget "MateDashWidgetsExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				044508CBAA500F95384A1C7F /* Debug */,
-				10348C60ECB32314CB788337 /* Release */,
+				AA1B2C3D4E5F6A7B8C9D0E07 /* Debug */,
+				AA1B2C3D4E5F6A7B8C9D0E08 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

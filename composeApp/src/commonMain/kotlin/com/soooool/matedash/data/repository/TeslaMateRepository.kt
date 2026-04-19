@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import com.soooool.matedash.data.persistence.updateLiveActivityState
 
 enum class ApiConnectionState { DISCONNECTED, CONNECTING, CONNECTED, ERROR }
 
@@ -38,9 +39,11 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
             while (isActive) {
                 try {
                     val dto = apiClient.getCarStatus(config)
-                    _carState.value = dto.toCarState()
+                    val newState = dto.toCarState()
+                    _carState.value = newState
                     _connectionState.value = ApiConnectionState.CONNECTED
                     _errorMessage.value = null
+                    updateLiveActivityState(newState)
                 } catch (e: Exception) {
                     _connectionState.value = ApiConnectionState.ERROR
                     _errorMessage.value = e.message ?: "데이터 수신 실패"

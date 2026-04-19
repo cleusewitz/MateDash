@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.data.model.ApiConfig
+import com.soooool.matedash.data.persistence.saveApiConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,8 +45,9 @@ class ConnectionViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 ServiceLocator.apiClient.getCarStatus(config)
-                ServiceLocator.repository.startPolling(config)
+                ServiceLocator.repository.startPolling(config, ServiceLocator.appSettings.pollIntervalSeconds * 1000L)
                 ServiceLocator.currentConfig = config
+                saveApiConfig(config)
                 _uiState.value = _uiState.value.copy(isConnecting = false)
                 onSuccess()
             } catch (e: Exception) {

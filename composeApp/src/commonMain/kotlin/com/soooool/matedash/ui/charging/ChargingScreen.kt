@@ -1,24 +1,38 @@
 package com.soooool.matedash.ui.charging
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -79,18 +93,26 @@ private fun chargeEfficiency(added: Double?, used: Double?): String? {
 @Composable
 fun ChargingScreen() {
     val vm = viewModel { ChargingViewModel() }
-    val charges by vm.charges.collectAsState()
+    val filteredCharges by vm.filteredCharges.collectAsState()
     val isLoading by vm.isLoading.collectAsState()
     val errorMsg by vm.errorMessage.collectAsState()
+    val selectedYear by vm.selectedYear.collectAsState()
+    val selectedMonth by vm.selectedMonth.collectAsState()
+
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+    LaunchedEffect(Unit) {
+        vm.loadIfNeeded()
+    }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBg)
             .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(top = statusBarTop + 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Spacer(Modifier.height(16.dp)) }
 
         item {
             Text(
@@ -98,6 +120,16 @@ fun ChargingScreen() {
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary,
+            )
+        }
+
+        item {
+            MonthYearSelector(
+                year = selectedYear,
+                month = selectedMonth,
+                onPrevious = vm::previousMonth,
+                onNext = vm::nextMonth,
+                onSelect = vm::setMonth,
             )
         }
 
@@ -112,19 +144,186 @@ fun ChargingScreen() {
             }
         } else if (errorMsg != null) {
             item {
-                Text(
-                    text = "⚠️ $errorMsg",
-                    color = TeslaRed,
-                    fontSize = 13.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        text = "⚠️ $errorMsg",
+                        color = TeslaRed,
+                        fontSize = 13.sp,
+                    )
+                    Text(
+                        text = "다시 시도",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = ChargingBlue,
+                        modifier = Modifier
+                            .clickable { vm.retry() }
+                            .padding(8.dp),
+                    )
+                }
             }
         } else {
-            item { ChargeSummaryCard(charges) }
-            items(charges) { charge -> ChargeItem(charge) }
+            // 선택된 월 요약 카드
+            if (filteredCharges.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(80.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        val emptyLabel = if (selectedMonth == 0) "${selectedYear}년" else "${selectedMonth}월"
+                        Text(
+                            text = "${emptyLabel} 충전 기록이 없습니다",
+                            fontSize = 14.sp,
+                            color = TextSecondary,
+                        )
+                    }
+                }
+            } else {
+                item { ChargeSummaryCard(filteredCharges) }
+            }
+
+            items(filteredCharges) { charge -> ChargeItem(charge) }
         }
 
-        item { Spacer(Modifier.height(24.dp)) }
+        item { Spacer(Modifier.height(100.dp)) }
+    }
+}
+
+private val MonthNames = listOf(
+    "1월", "2월", "3월", "4월", "5월", "6월",
+    "7월", "8월", "9월", "10월", "11월", "12월",
+)
+
+@Composable
+private fun MonthYearSelector(
+    year: Int,
+    month: Int,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onSelect: (year: Int, month: Int) -> Unit,
+) {
+    var showDropdown by remember { mutableStateOf(false) }
+
+    val label = if (month == 0) "전체" else "${month}월"
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // < arrow
+        IconButton(onClick = onPrevious, modifier = Modifier.size(36.dp)) {
+            Text("<", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+        }
+
+        // month label (clickable for dropdown)
+        Box {
+            Text(
+                text = label,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary,
+                modifier = Modifier
+                    .clickable { showDropdown = true }
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+
+            DropdownMenu(
+                expanded = showDropdown,
+                onDismissRequest = { showDropdown = false },
+                modifier = Modifier
+                    .background(CardBg)
+                    .width(220.dp),
+            ) {
+                // Year selector row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "<",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        modifier = Modifier.clickable { onSelect(year - 1, month) },
+                    )
+                    Text(
+                        text = "${year}년",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                    )
+                    Text(
+                        text = ">",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        modifier = Modifier.clickable { onSelect(year + 1, month) },
+                    )
+                }
+
+                // "전체" option
+                val allSelected = month == 0
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = "전체",
+                            fontSize = 14.sp,
+                            fontWeight = if (allSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (allSelected) TeslaRed else TextPrimary,
+                        )
+                    },
+                    onClick = {
+                        onSelect(year, 0)
+                        showDropdown = false
+                    },
+                )
+
+                // Month grid (4 rows x 3 cols)
+                for (row in 0..3) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                    ) {
+                        for (col in 0..2) {
+                            val m = row * 3 + col + 1
+                            val isSelected = m == month
+                            Text(
+                                text = MonthNames[m - 1],
+                                fontSize = 14.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) TeslaRed else TextPrimary,
+                                modifier = Modifier
+                                    .clickable {
+                                        onSelect(year, m)
+                                        showDropdown = false
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // > arrow
+        IconButton(onClick = onNext, modifier = Modifier.size(36.dp)) {
+            Text(">", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        // Year label on the right
+        Text(
+            text = "${year}년",
+            fontSize = 14.sp,
+            color = TextSecondary,
+        )
     }
 }
 

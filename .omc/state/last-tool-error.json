@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git status && git branch && git remote -v\"}",
-  "error": "Exit code 128\nfatal: not a git repository (or any of the parent directories): .git",
-  "timestamp": "2026-04-03T06:36:18.153Z",
-  "retry_count": 1
-}

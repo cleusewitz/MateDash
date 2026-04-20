@@ -9,6 +9,9 @@ expect fun clearSharedText()
 /** 테스트용: 임의 텍스트를 공유 수신한 것으로 기록 */
 expect fun writeTestSharedText(text: String)
 
+/** Share Extension이 UserDefaults에 남긴 로그 히스토리 (최신 20줄) */
+expect fun readShareExtensionLog(): List<String>
+
 data class SharedPlace(
     val source: String,
     val name: String,

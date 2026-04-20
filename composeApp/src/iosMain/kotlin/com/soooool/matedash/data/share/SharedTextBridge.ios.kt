@@ -5,6 +5,7 @@ import platform.Foundation.NSUserDefaults
 private const val SUITE_NAME = "group.com.soooool.matedash"
 private const val KEY_SHARE_RAW = "share_text_raw"
 private const val KEY_SHARE_UPDATED = "share_text_updated"
+private const val KEY_SHARE_DBG_LOG = "share_dbg_log"
 
 actual fun readSharedText(): String? {
     val defaults = NSUserDefaults(suiteName = SUITE_NAME) ?: return null
@@ -16,7 +17,15 @@ actual fun clearSharedText() {
     val defaults = NSUserDefaults(suiteName = SUITE_NAME) ?: return
     defaults.removeObjectForKey(KEY_SHARE_RAW)
     defaults.removeObjectForKey(KEY_SHARE_UPDATED)
+    defaults.removeObjectForKey(KEY_SHARE_DBG_LOG)
     defaults.synchronize()
+}
+
+@Suppress("UNCHECKED_CAST")
+actual fun readShareExtensionLog(): List<String> {
+    val defaults = NSUserDefaults(suiteName = SUITE_NAME) ?: return emptyList()
+    val arr = defaults.arrayForKey(KEY_SHARE_DBG_LOG) ?: return emptyList()
+    return arr.mapNotNull { it as? String }
 }
 
 actual fun writeTestSharedText(text: String) {

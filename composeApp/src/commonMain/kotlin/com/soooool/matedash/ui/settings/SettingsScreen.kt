@@ -48,6 +48,7 @@ import com.soooool.matedash.data.persistence.startTestDrivingLiveActivity
 import com.soooool.matedash.data.persistence.stopTestLiveActivity
 import com.soooool.matedash.data.share.clearSharedText
 import com.soooool.matedash.data.share.parseSharedPlace
+import com.soooool.matedash.data.share.readShareExtensionLog
 import com.soooool.matedash.data.share.readSharedText
 import com.soooool.matedash.data.share.writeTestSharedText
 import kotlinx.coroutines.launch
@@ -611,6 +612,12 @@ private const val NAVER_SAMPLE_TEXT = "[네이버지도]\n하나로마트 군자
 @Composable
 private fun SharedTextCard() {
     var raw by remember { mutableStateOf(readSharedText()) }
+    var logs by remember { mutableStateOf(readShareExtensionLog()) }
+
+    fun refresh() {
+        raw = readSharedText()
+        logs = readShareExtensionLog()
+    }
 
     Column(
         modifier = Modifier
@@ -628,7 +635,7 @@ private fun SharedTextCard() {
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
-                onClick = { raw = readSharedText() },
+                onClick = { refresh() },
                 modifier = Modifier.weight(1f).height(38.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -641,7 +648,7 @@ private fun SharedTextCard() {
             Button(
                 onClick = {
                     writeTestSharedText(NAVER_SAMPLE_TEXT)
-                    raw = readSharedText()
+                    refresh()
                 },
                 modifier = Modifier.weight(1f).height(38.dp),
                 shape = RoundedCornerShape(10.dp),
@@ -655,7 +662,7 @@ private fun SharedTextCard() {
             Button(
                 onClick = {
                     clearSharedText()
-                    raw = null
+                    refresh()
                 },
                 modifier = Modifier.weight(1f).height(38.dp),
                 shape = RoundedCornerShape(10.dp),
@@ -695,6 +702,24 @@ private fun SharedTextCard() {
                 DebugRow("장소", place.name.ifBlank { "-" })
                 DebugRow("주소", place.address.ifBlank { "-" })
                 DebugRow("URL", place.url.ifBlank { "-" })
+            }
+        }
+
+        Spacer(Modifier.height(14.dp))
+        Text("Share Extension 로그 (최신 20줄)", fontSize = 11.sp, color = TextSecondary)
+        Spacer(Modifier.height(4.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF111418), RoundedCornerShape(10.dp))
+                .padding(10.dp),
+        ) {
+            if (logs.isEmpty()) {
+                Text("아직 로그 없음 (공유시트에서 공유하면 기록됩니다)", fontSize = 11.sp, color = TextSecondary)
+            } else {
+                logs.forEach { line ->
+                    Text(line, fontSize = 11.sp, color = TextPrimary)
+                }
             }
         }
     }

@@ -17,3 +17,5 @@ actual fun startTestDrivingLiveActivity() {
 actual fun stopTestLiveActivity() {
     // Android: no-op
 }
+
+actual fun readLiveActivityDebug(): LiveActivityDebug = LiveActivityDebug()

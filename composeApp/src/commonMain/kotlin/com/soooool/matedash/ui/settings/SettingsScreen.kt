@@ -40,7 +40,9 @@ import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.getPlatform
 import com.soooool.matedash.data.api.TeslaApiConfig
 import com.soooool.matedash.data.api.TeslaOAuth
+import com.soooool.matedash.data.persistence.LiveActivityDebug
 import com.soooool.matedash.data.persistence.clearApiConfig
+import com.soooool.matedash.data.persistence.readLiveActivityDebug
 import com.soooool.matedash.data.persistence.startTestLiveActivity
 import com.soooool.matedash.data.persistence.startTestDrivingLiveActivity
 import com.soooool.matedash.data.persistence.stopTestLiveActivity
@@ -218,6 +220,10 @@ private fun FeatureSettingsCard() {
                     Text("종료", fontSize = 12.sp, fontWeight = FontWeight.Medium)
                 }
             }
+
+            Spacer(Modifier.height(16.dp))
+
+            LiveActivityDebugPanel()
 
             Spacer(Modifier.height(16.dp))
         }
@@ -525,5 +531,65 @@ private fun SettingRow(label: String, value: String) {
         Text(label, fontSize = 12.sp, color = TextSecondary)
         Spacer(Modifier.height(4.dp))
         Text(value, fontSize = 15.sp, color = TextPrimary, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
+private fun LiveActivityDebugPanel() {
+    var debug by remember { mutableStateOf<LiveActivityDebug>(readLiveActivityDebug()) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF111418), RoundedCornerShape(14.dp))
+            .padding(14.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("LA 디버그 스냅샷", fontSize = 13.sp, color = TextPrimary, fontWeight = FontWeight.SemiBold)
+            Button(
+                onClick = { debug = readLiveActivityDebug() },
+                modifier = Modifier.height(28.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ChargingBlue.copy(alpha = 0.2f),
+                    contentColor = ChargingBlue,
+                ),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+            ) {
+                Text("새로고침", fontSize = 11.sp, fontWeight = FontWeight.Medium)
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        DebugRow("마지막 갱신", debug.lastUpdate.ifBlank { "-" })
+        DebugRow("state", debug.rawState.ifBlank { "-" })
+        DebugRow("shift_state", debug.rawShiftState.ifBlank { "(null/공백)" })
+        DebugRow("speed", "${debug.rawSpeed} km/h")
+        DebugRow("power", "${debug.rawPower} kW")
+        DebugRow("charging_state", debug.rawChargingState.ifBlank { "-" })
+        DebugRow("isDriving 판정", if (debug.isDriving) "true" else "false", if (debug.isDriving) BatteryGreen else TextSecondary)
+        DebugRow("isCharging 판정", if (debug.isCharging) "true" else "false", if (debug.isCharging) BatteryGreen else TextSecondary)
+
+        Spacer(Modifier.height(8.dp))
+        Text("Swift 로그 (마지막 액션)", fontSize = 11.sp, color = TextSecondary)
+        Spacer(Modifier.height(4.dp))
+        DebugRow("driving", debug.drivingLast.ifBlank { "-" })
+        DebugRow("charging", debug.chargingLast.ifBlank { "-" })
+    }
+}
+
+@Composable
+private fun DebugRow(label: String, value: String, valueColor: Color = TextPrimary) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(label, fontSize = 11.sp, color = TextSecondary)
+        Text(value, fontSize = 11.sp, color = valueColor, fontWeight = FontWeight.Medium)
     }
 }

@@ -10,6 +10,15 @@ class DrivingLiveActivityManager {
     private var pollTimer: Timer?
 
     private let suiteName = "group.com.soooool.matedash"
+    private let debugKey = "la_dbg_driving_last"
+
+    private func log(_ msg: String) {
+        print("[MateDash] Driving: \(msg)")
+        guard let defaults = UserDefaults(suiteName: suiteName) else { return }
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss"
+        defaults.set("\(f.string(from: Date())) \(msg)", forKey: debugKey)
+    }
 
     // MARK: - UserDefaults에서 상태 읽기
 
@@ -79,7 +88,10 @@ class DrivingLiveActivityManager {
     // MARK: - 상태 확인 & Live Activity 관리
 
     private func checkAndUpdate() {
-        guard let (name, startAddr, state, isDriving) = readState() else { return }
+        guard let (name, startAddr, state, isDriving) = readState() else {
+            log("check skipped (no defaults)")
+            return
+        }
 
         if isDriving {
             if currentActivity != nil {
@@ -90,6 +102,8 @@ class DrivingLiveActivityManager {
         } else {
             if currentActivity != nil {
                 endActivity(state: state)
+            } else {
+                log("idle (not driving, no activity)")
             }
         }
     }
@@ -98,7 +112,7 @@ class DrivingLiveActivityManager {
 
     private func startActivity(vehicleName: String, startAddress: String, state: DrivingActivityAttributes.ContentState) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            print("[MateDash] Live Activities not enabled")
+            log("LA disabled by system")
             return
         }
 
@@ -115,9 +129,9 @@ class DrivingLiveActivityManager {
                 pushType: nil
             )
             currentActivity = activity
-            print("[MateDash] Driving Live Activity started: \(activity.id), speed=\(state.speed)km/h")
+            log("started id=\(activity.id) speed=\(state.speed)")
         } catch {
-            print("[MateDash] Failed to start Driving Live Activity: \(error)")
+            log("start FAILED: \(error.localizedDescription)")
         }
     }
 
@@ -127,6 +141,7 @@ class DrivingLiveActivityManager {
         Task {
             let content = ActivityContent(state: state, staleDate: Date().addingTimeInterval(120))
             await activity.update(content)
+            log("updated speed=\(state.speed) bat=\(state.batteryLevel)")
         }
     }
 
@@ -145,7 +160,7 @@ class DrivingLiveActivityManager {
         Task {
             let content = ActivityContent(state: finalState, staleDate: nil)
             await activity.end(content, dismissalPolicy: .immediate)
-            print("[MateDash] Driving Live Activity ended")
+            log("ended")
             currentActivity = nil
         }
     }
@@ -156,7 +171,7 @@ class DrivingLiveActivityManager {
                 await activity.end(nil, dismissalPolicy: .immediate)
             }
             currentActivity = nil
-            print("[MateDash] All Driving Live Activities ended")
+            log("endAll done")
         }
     }
 }

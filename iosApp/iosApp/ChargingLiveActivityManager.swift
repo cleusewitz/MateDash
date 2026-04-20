@@ -10,6 +10,15 @@ class ChargingLiveActivityManager {
     private var pollTimer: Timer?
 
     private let suiteName = "group.com.soooool.matedash"
+    private let debugKey = "la_dbg_charging_last"
+
+    private func log(_ msg: String) {
+        print("[MateDash] Charging: \(msg)")
+        guard let defaults = UserDefaults(suiteName: suiteName) else { return }
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss"
+        defaults.set("\(f.string(from: Date())) \(msg)", forKey: debugKey)
+    }
 
     // MARK: - UserDefaults에서 상태 읽기
 
@@ -80,20 +89,22 @@ class ChargingLiveActivityManager {
     // MARK: - 상태 확인 & Live Activity 관리
 
     private func checkAndUpdate() {
-        guard let (name, state, isCharging) = readState() else { return }
+        guard let (name, state, isCharging) = readState() else {
+            log("check skipped (no defaults)")
+            return
+        }
 
         if isCharging {
             if currentActivity != nil {
-                // 업데이트
                 updateActivity(state: state)
             } else {
-                // 새로 시작
                 startActivity(vehicleName: name, state: state)
             }
         } else {
             if currentActivity != nil {
-                // 충전 종료 → Live Activity 종료
                 endActivity(state: state)
+            } else {
+                log("idle (not charging, no activity)")
             }
         }
     }
@@ -102,7 +113,7 @@ class ChargingLiveActivityManager {
 
     private func startActivity(vehicleName: String, state: ChargingActivityAttributes.ContentState) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            print("[MateDash] Live Activities not enabled")
+            log("LA disabled by system")
             return
         }
 
@@ -116,9 +127,9 @@ class ChargingLiveActivityManager {
                 pushType: nil
             )
             currentActivity = activity
-            print("[MateDash] Live Activity started: \(activity.id), battery=\(state.batteryLevel)%")
+            log("started id=\(activity.id) bat=\(state.batteryLevel)")
         } catch {
-            print("[MateDash] Failed to start Live Activity: \(error)")
+            log("start FAILED: \(error.localizedDescription)")
         }
     }
 
@@ -128,7 +139,7 @@ class ChargingLiveActivityManager {
         Task {
             let content = ActivityContent(state: state, staleDate: Date().addingTimeInterval(120))
             await activity.update(content)
-            print("[MateDash] Live Activity updated: battery=\(state.batteryLevel)%, power=\(state.chargerPower)kW")
+            log("updated bat=\(state.batteryLevel) kW=\(state.chargerPower)")
         }
     }
 
@@ -147,7 +158,7 @@ class ChargingLiveActivityManager {
         Task {
             let content = ActivityContent(state: finalState, staleDate: nil)
             await activity.end(content, dismissalPolicy: .immediate)
-            print("[MateDash] Live Activity ended: battery=\(state.batteryLevel)%")
+            log("ended bat=\(state.batteryLevel)")
             currentActivity = nil
         }
     }

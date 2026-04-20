@@ -8,11 +8,16 @@ import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -122,6 +127,21 @@ data class TeslaVehicleState(
     val pr: Int = 0,
     val ft: Int = 0,
     val rt: Int = 0,
+)
+
+@Serializable
+data class TeslaNavGpsRequest(
+    val lat: Double,
+    val lon: Double,
+    val order: Int = 1,
+)
+
+@Serializable
+data class TeslaShareRequest(
+    val type: String = "share_ext_content_raw",
+    val locale: String = "ko-KR",
+    @SerialName("timestamp_ms") val timestampMs: Long = 0,
+    val value: Map<String, String> = emptyMap(),
 )
 
 @Serializable
@@ -269,6 +289,72 @@ class TeslaFleetApiClient {
             header(HttpHeaders.Authorization, authHeader(config))
         }.body()
         return response.response?.result ?: false
+    }
+
+    /** 차량 네비게이션에 GPS 좌표 전송 */
+    suspend fun sendNavigationGps(
+        config: TeslaApiConfig,
+        latitude: Double,
+        longitude: Double,
+    ): TeslaCommandResult {
+        val url = "${config.baseUrl}/api/1/vehicles/${config.vehicleId}/command/navigation_gps_request"
+        println("[MateDash] navigation_gps_request: lat=$latitude, lon=$longitude")
+        return try {
+            val httpResponse = httpClient.post(url) {
+                header(HttpHeaders.Authorization, authHeader(config))
+                contentType(ContentType.Application.Json)
+                setBody(TeslaNavGpsRequest(lat = latitude, lon = longitude))
+            }
+            println("[MateDash] navigation_gps_request: status=${httpResponse.status}")
+            if (!httpResponse.status.isSuccess()) {
+                val body = httpResponse.bodyAsText()
+                println("[MateDash] navigation_gps_request: errorBody=$body")
+                TeslaCommandResult(false, "${httpResponse.status}: $body")
+            } else {
+                val response: TeslaCommandResponse = httpResponse.body()
+                response.response ?: TeslaCommandResult(true, "")
+            }
+        } catch (e: Exception) {
+            println("[MateDash] navigation_gps_request: error=${e.message}")
+            TeslaCommandResult(false, e.message ?: "error")
+        }
+    }
+
+    /** 차량으로 텍스트(URL/주소) 공유 — 차량 내 파서가 주소/URL을 해석해 네비에 입력 */
+    @OptIn(ExperimentalTime::class)
+    suspend fun shareToVehicle(
+        config: TeslaApiConfig,
+        text: String,
+        subject: String = "",
+    ): TeslaCommandResult {
+        val url = "${config.baseUrl}/api/1/vehicles/${config.vehicleId}/command/share"
+        val now = Clock.System.now().toEpochMilliseconds()
+        val req = TeslaShareRequest(
+            timestampMs = now,
+            value = buildMap {
+                put("android.intent.extra.TEXT", text)
+                if (subject.isNotBlank()) put("android.intent.extra.SUBJECT", subject)
+            },
+        )
+        return try {
+            val httpResponse = httpClient.post(url) {
+                header(HttpHeaders.Authorization, authHeader(config))
+                contentType(ContentType.Application.Json)
+                setBody(req)
+            }
+            println("[MateDash] share: status=${httpResponse.status}")
+            if (!httpResponse.status.isSuccess()) {
+                val body = httpResponse.bodyAsText()
+                println("[MateDash] share: errorBody=$body")
+                TeslaCommandResult(false, "${httpResponse.status}: $body")
+            } else {
+                val response: TeslaCommandResponse = httpResponse.body()
+                response.response ?: TeslaCommandResult(true, "")
+            }
+        } catch (e: Exception) {
+            println("[MateDash] share: error=${e.message}")
+            TeslaCommandResult(false, e.message ?: "error")
+        }
     }
 
     suspend fun sendCommand(config: TeslaApiConfig, command: String): TeslaCommandResult {

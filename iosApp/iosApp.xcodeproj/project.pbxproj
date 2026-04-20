@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AA1B2C3D4E5F6A7B8C9D0E0D /* MateDashWidgetsExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = AA1B2C3D4E5F6A7B8C9D0E01 /* MateDashWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BB1B2C3D4E5F6A7B8C9D0E0D /* MateDashShareExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BB1B2C3D4E5F6A7B8C9D0E01 /* MateDashShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -17,6 +18,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = AA1B2C3D4E5F6A7B8C9D0E05;
 			remoteInfo = MateDashWidgetsExtension;
+		};
+		BB1B2C3D4E5F6A7B8C9D0E0A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6CFFEFA9B5BB8B237FDD0DA4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB1B2C3D4E5F6A7B8C9D0E05;
+			remoteInfo = MateDashShareExtension;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -28,6 +36,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				AA1B2C3D4E5F6A7B8C9D0E0D /* MateDashWidgetsExtension.appex in Embed App Extensions */,
+				BB1B2C3D4E5F6A7B8C9D0E0D /* MateDashShareExtension.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -36,6 +45,7 @@
 
 /* Begin PBXFileReference section */
 		AA1B2C3D4E5F6A7B8C9D0E01 /* MateDashWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MateDashWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB1B2C3D4E5F6A7B8C9D0E01 /* MateDashShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MateDashShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF86D7813CE3E7A217326FF2 /* MateDash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MateDash.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -64,6 +74,13 @@
 			);
 			target = AA1B2C3D4E5F6A7B8C9D0E05 /* MateDashWidgetsExtension */;
 		};
+		BB1B2C3D4E5F6A7B8C9D0E0E /* Exceptions for "MateDashShare" folder in "MateDashShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = BB1B2C3D4E5F6A7B8C9D0E05 /* MateDashShareExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -74,6 +91,14 @@
 				AA1B2C3D4E5F6A7B8C9D0E0E /* Exceptions for "MateDashWidgets" folder in "MateDashWidgetsExtension" target */,
 			);
 			path = MateDashWidgets;
+			sourceTree = "<group>";
+		};
+		BB1B2C3D4E5F6A7B8C9D0E09 /* MateDashShare */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BB1B2C3D4E5F6A7B8C9D0E0E /* Exceptions for "MateDashShare" folder in "MateDashShareExtension" target */,
+			);
+			path = MateDashShare;
 			sourceTree = "<group>";
 		};
 		BAF483F320B2096A7FCE246F /* Configuration */ = {
@@ -99,6 +124,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BB1B2C3D4E5F6A7B8C9D0E03 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DE2AA5283D7674D1B18C0AD4 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +147,7 @@
 				BAF483F320B2096A7FCE246F /* Configuration */,
 				EC28150D0269AC64B00627FB /* iosApp */,
 				AA1B2C3D4E5F6A7B8C9D0E09 /* MateDashWidgets */,
+				BB1B2C3D4E5F6A7B8C9D0E09 /* MateDashShare */,
 				791DCB2F7B36580423DB46CD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -124,6 +157,7 @@
 			children = (
 				AF86D7813CE3E7A217326FF2 /* MateDash.app */,
 				AA1B2C3D4E5F6A7B8C9D0E01 /* MateDashWidgetsExtension.appex */,
+				BB1B2C3D4E5F6A7B8C9D0E01 /* MateDashShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -153,6 +187,28 @@
 			productReference = AA1B2C3D4E5F6A7B8C9D0E01 /* MateDashWidgetsExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		BB1B2C3D4E5F6A7B8C9D0E05 /* MateDashShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB1B2C3D4E5F6A7B8C9D0E06 /* Build configuration list for PBXNativeTarget "MateDashShareExtension" */;
+			buildPhases = (
+				BB1B2C3D4E5F6A7B8C9D0E02 /* Sources */,
+				BB1B2C3D4E5F6A7B8C9D0E03 /* Frameworks */,
+				BB1B2C3D4E5F6A7B8C9D0E04 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				BB1B2C3D4E5F6A7B8C9D0E09 /* MateDashShare */,
+			);
+			name = MateDashShareExtension;
+			packageProductDependencies = (
+			);
+			productName = MateDashShareExtension;
+			productReference = BB1B2C3D4E5F6A7B8C9D0E01 /* MateDashShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		FBBBDF94420753B1A13F7E2A /* iosApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 155B6706D9603BF3BDACDD55 /* Build configuration list for PBXNativeTarget "iosApp" */;
@@ -167,6 +223,7 @@
 			);
 			dependencies = (
 				AA1B2C3D4E5F6A7B8C9D0E0B /* PBXTargetDependency */,
+				BB1B2C3D4E5F6A7B8C9D0E0B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				EC28150D0269AC64B00627FB /* iosApp */,
@@ -191,6 +248,9 @@
 					AA1B2C3D4E5F6A7B8C9D0E05 = {
 						CreatedOnToolsVersion = 16.2;
 					};
+					BB1B2C3D4E5F6A7B8C9D0E05 = {
+						CreatedOnToolsVersion = 16.2;
+					};
 					FBBBDF94420753B1A13F7E2A = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -212,6 +272,7 @@
 			targets = (
 				FBBBDF94420753B1A13F7E2A /* iosApp */,
 				AA1B2C3D4E5F6A7B8C9D0E05 /* MateDashWidgetsExtension */,
+				BB1B2C3D4E5F6A7B8C9D0E05 /* MateDashShareExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -225,6 +286,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AA1B2C3D4E5F6A7B8C9D0E04 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB1B2C3D4E5F6A7B8C9D0E04 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -270,6 +338,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BB1B2C3D4E5F6A7B8C9D0E02 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -277,6 +352,11 @@
 			isa = PBXTargetDependency;
 			target = AA1B2C3D4E5F6A7B8C9D0E05 /* MateDashWidgetsExtension */;
 			targetProxy = AA1B2C3D4E5F6A7B8C9D0E0A /* PBXContainerItemProxy */;
+		};
+		BB1B2C3D4E5F6A7B8C9D0E0B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB1B2C3D4E5F6A7B8C9D0E05 /* MateDashShareExtension */;
+			targetProxy = BB1B2C3D4E5F6A7B8C9D0E0A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -514,6 +594,54 @@
 			};
 			name = Release;
 		};
+		BB1B2C3D4E5F6A7B8C9D0E07 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MateDashShare/MateDashShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4UZD57F52C;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MateDashShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "MateDash";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.soooool.matedash.MateDash.Share;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BB1B2C3D4E5F6A7B8C9D0E08 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MateDashShare/MateDashShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4UZD57F52C;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MateDashShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "MateDash";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.soooool.matedash.MateDash.Share;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -540,6 +668,15 @@
 			buildConfigurations = (
 				AA1B2C3D4E5F6A7B8C9D0E07 /* Debug */,
 				AA1B2C3D4E5F6A7B8C9D0E08 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB1B2C3D4E5F6A7B8C9D0E06 /* Build configuration list for PBXNativeTarget "MateDashShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB1B2C3D4E5F6A7B8C9D0E07 /* Debug */,
+				BB1B2C3D4E5F6A7B8C9D0E08 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

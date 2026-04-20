@@ -46,6 +46,10 @@ import com.soooool.matedash.data.persistence.readLiveActivityDebug
 import com.soooool.matedash.data.persistence.startTestLiveActivity
 import com.soooool.matedash.data.persistence.startTestDrivingLiveActivity
 import com.soooool.matedash.data.persistence.stopTestLiveActivity
+import com.soooool.matedash.data.share.clearSharedText
+import com.soooool.matedash.data.share.parseSharedPlace
+import com.soooool.matedash.data.share.readSharedText
+import com.soooool.matedash.data.share.writeTestSharedText
 import kotlinx.coroutines.launch
 
 private val DarkBg = Color(0xFF0B0B0B)
@@ -99,6 +103,14 @@ fun SettingsScreen(onDisconnect: () -> Unit) {
         SectionTitle("기능 설정")
         Spacer(Modifier.height(8.dp))
         FeatureSettingsCard()
+
+        // 공유 수신
+        if (getPlatform().name.lowercase().contains("ios")) {
+            Spacer(Modifier.height(28.dp))
+            SectionTitle("공유 수신")
+            Spacer(Modifier.height(8.dp))
+            SharedTextCard()
+        }
 
         // Tesla API 설정
         Spacer(Modifier.height(28.dp))
@@ -591,5 +603,99 @@ private fun DebugRow(label: String, value: String, valueColor: Color = TextPrima
     ) {
         Text(label, fontSize = 11.sp, color = TextSecondary)
         Text(value, fontSize = 11.sp, color = valueColor, fontWeight = FontWeight.Medium)
+    }
+}
+
+private const val NAVER_SAMPLE_TEXT = "[네이버지도]\n하나로마트 군자농협대부점\n경기 안산시 단원구 대부중앙로 142\nhttps://naver.me/I5caIqaF"
+
+@Composable
+private fun SharedTextCard() {
+    var raw by remember { mutableStateOf(readSharedText()) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(CardBg, RoundedCornerShape(20.dp))
+            .padding(20.dp),
+    ) {
+        Text(
+            "다른 앱에서 MateDash로 공유한 텍스트가 여기 표시됩니다",
+            fontSize = 12.sp,
+            color = TextSecondary,
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = { raw = readSharedText() },
+                modifier = Modifier.weight(1f).height(38.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ChargingBlue.copy(alpha = 0.2f),
+                    contentColor = ChargingBlue,
+                ),
+            ) {
+                Text("새로고침", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            }
+            Button(
+                onClick = {
+                    writeTestSharedText(NAVER_SAMPLE_TEXT)
+                    raw = readSharedText()
+                },
+                modifier = Modifier.weight(1f).height(38.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BatteryGreen.copy(alpha = 0.2f),
+                    contentColor = BatteryGreen,
+                ),
+            ) {
+                Text("샘플 주입", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            }
+            Button(
+                onClick = {
+                    clearSharedText()
+                    raw = null
+                },
+                modifier = Modifier.weight(1f).height(38.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TeslaRed.copy(alpha = 0.2f),
+                    contentColor = TeslaRed,
+                ),
+            ) {
+                Text("초기화", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            }
+        }
+
+        val current = raw
+        if (current.isNullOrBlank()) {
+            Spacer(Modifier.height(14.dp))
+            Text("아직 받은 공유 없음", fontSize = 13.sp, color = TextSecondary)
+        } else {
+            val place = parseSharedPlace(current)
+
+            Spacer(Modifier.height(14.dp))
+            Text("원문", fontSize = 11.sp, color = TextSecondary)
+            Spacer(Modifier.height(4.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF111418), RoundedCornerShape(10.dp))
+                    .padding(10.dp),
+            ) {
+                Text(current, fontSize = 12.sp, color = TextPrimary)
+            }
+
+            if (place != null) {
+                Spacer(Modifier.height(14.dp))
+                Text("추출 결과", fontSize = 11.sp, color = TextSecondary)
+                Spacer(Modifier.height(6.dp))
+                DebugRow("출처", place.source.ifBlank { "-" })
+                DebugRow("장소", place.name.ifBlank { "-" })
+                DebugRow("주소", place.address.ifBlank { "-" })
+                DebugRow("URL", place.url.ifBlank { "-" })
+            }
+        }
     }
 }

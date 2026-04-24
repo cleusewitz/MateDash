@@ -1,5 +1,11 @@
 package com.soooool.matedash.ui.charging
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -98,6 +104,7 @@ fun ChargingScreen() {
     val errorMsg by vm.errorMessage.collectAsState()
     val selectedYear by vm.selectedYear.collectAsState()
     val selectedMonth by vm.selectedMonth.collectAsState()
+    val selectedCharge by vm.selectedCharge.collectAsState()
 
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
@@ -105,90 +112,111 @@ fun ChargingScreen() {
         vm.loadIfNeeded()
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBg)
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = statusBarTop + 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().background(DarkBg)) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(top = statusBarTop + 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
 
-        item {
-            Text(
-                text = "충전 기록",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-            )
-        }
-
-        item {
-            MonthYearSelector(
-                year = selectedYear,
-                month = selectedMonth,
-                onPrevious = vm::previousMonth,
-                onNext = vm::nextMonth,
-                onSelect = vm::setMonth,
-            )
-        }
-
-        if (isLoading) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(120.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(color = TeslaRed, modifier = Modifier.size(32.dp))
-                }
-            }
-        } else if (errorMsg != null) {
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(
-                        text = "⚠️ $errorMsg",
-                        color = TeslaRed,
-                        fontSize = 13.sp,
-                    )
-                    Text(
-                        text = "다시 시도",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = ChargingBlue,
-                        modifier = Modifier
-                            .clickable { vm.retry() }
-                            .padding(8.dp),
-                    )
-                }
-            }
-        } else {
-            // 선택된 월 요약 카드
-            if (filteredCharges.isEmpty()) {
                 item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(80.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        val emptyLabel = if (selectedMonth == 0) "${selectedYear}년" else "${selectedMonth}월"
-                        Text(
-                            text = "${emptyLabel} 충전 기록이 없습니다",
-                            fontSize = 14.sp,
-                            color = TextSecondary,
-                        )
+                    Text(
+                        text = "충전 기록",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                    )
+                }
+
+                item {
+                    MonthYearSelector(
+                        year = selectedYear,
+                        month = selectedMonth,
+                        onPrevious = vm::previousMonth,
+                        onNext = vm::nextMonth,
+                        onSelect = vm::setMonth,
+                    )
+                }
+
+                if (isLoading) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().height(120.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(color = TeslaRed, modifier = Modifier.size(32.dp))
+                        }
+                    }
+                } else if (errorMsg != null) {
+                    item {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Text(
+                                text = "⚠️ $errorMsg",
+                                color = TeslaRed,
+                                fontSize = 13.sp,
+                            )
+                            Text(
+                                text = "다시 시도",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ChargingBlue,
+                                modifier = Modifier
+                                    .clickable { vm.retry() }
+                                    .padding(8.dp),
+                            )
+                        }
+                    }
+                } else {
+                    // 선택된 월 요약 카드
+                    if (filteredCharges.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().height(80.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                val emptyLabel = if (selectedMonth == 0) "${selectedYear}년" else "${selectedMonth}월"
+                                Text(
+                                    text = "${emptyLabel} 충전 기록이 없습니다",
+                                    fontSize = 14.sp,
+                                    color = TextSecondary,
+                                )
+                            }
+                        }
+                    } else {
+                        item { ChargeSummaryCard(filteredCharges) }
+                    }
+
+                    items(filteredCharges) { charge ->
+                        ChargeItem(charge = charge, onClick = { vm.selectCharge(charge.chargeId) })
                     }
                 }
-            } else {
-                item { ChargeSummaryCard(filteredCharges) }
-            }
 
-            items(filteredCharges) { charge -> ChargeItem(charge) }
+                item { Spacer(Modifier.height(100.dp)) }
+            }
         }
 
-        item { Spacer(Modifier.height(100.dp)) }
+        AnimatedVisibility(
+            visible = selectedCharge != null,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(300),
+            ) + fadeIn(animationSpec = tween(300)),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(250),
+            ) + fadeOut(animationSpec = tween(250)),
+        ) {
+            selectedCharge?.let { c ->
+                ChargeDetailScreen(charge = c, onClose = { vm.clearSelection() })
+            }
+        }
     }
 }
 
@@ -374,7 +402,7 @@ private fun ChargeSummaryItem(label: String, value: String, color: Color = TextP
 }
 
 @Composable
-private fun ChargeItem(charge: ChargeDto) {
+private fun ChargeItem(charge: ChargeDto, onClick: () -> Unit) {
     val energyAdded = charge.chargeEnergyAdded ?: 0.0
     val startLevel = charge.batteryDetails?.startBatteryLevel ?: 0
     val endLevel = charge.batteryDetails?.endBatteryLevel ?: 0
@@ -389,6 +417,7 @@ private fun ChargeItem(charge: ChargeDto) {
         modifier = Modifier
             .fillMaxWidth()
             .background(CardBg, RoundedCornerShape(16.dp))
+            .clickable { onClick() }
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {

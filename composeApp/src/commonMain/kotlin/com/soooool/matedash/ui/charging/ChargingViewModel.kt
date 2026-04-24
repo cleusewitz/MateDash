@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.data.api.ChargeDto
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -36,6 +39,22 @@ class ChargingViewModel : ViewModel() {
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _selectedChargeId = MutableStateFlow<Int?>(null)
+    val selectedChargeId: StateFlow<Int?> = _selectedChargeId.asStateFlow()
+
+    val selectedCharge: StateFlow<ChargeDto?> =
+        combine(_allCharges, _selectedChargeId) { list, id ->
+            if (id == null) null else list.firstOrNull { it.chargeId == id }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    fun selectCharge(id: Int?) {
+        _selectedChargeId.value = id
+    }
+
+    fun clearSelection() {
+        _selectedChargeId.value = null
+    }
 
     private var loaded = false
 

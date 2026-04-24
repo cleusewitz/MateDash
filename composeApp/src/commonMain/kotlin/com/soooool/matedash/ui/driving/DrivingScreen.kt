@@ -156,7 +156,7 @@ fun DrivingScreen() {
                 }
 
                 items(drives) { drive ->
-                    DriveItem(drive = drive, onClick = { vm.selectDrive(drive.driveId) })
+                    DriveItem(drive = drive, onClick = { drive.driveId?.let { vm.selectDrive(it) } })
                 }
             }
 

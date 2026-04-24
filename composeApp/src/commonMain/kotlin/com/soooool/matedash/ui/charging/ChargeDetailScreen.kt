@@ -117,17 +117,17 @@ fun ChargeDetailScreen(charge: ChargeDto, onClose: () -> Unit) {
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "충전 상세",
-                        fontSize = 22.sp,
+                        text = charge.address ?: "위치 없음",
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary,
+                        maxLines = 2,
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text = charge.address ?: "위치 없음",
-                        fontSize = 13.sp,
+                        text = formatDateTime(charge.startDate),
+                        fontSize = 12.sp,
                         color = TextSecondary,
-                        maxLines = 2,
                     )
                 }
             }

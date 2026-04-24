@@ -194,7 +194,7 @@ fun ChargingScreen() {
                     }
 
                     items(filteredCharges) { charge ->
-                        ChargeItem(charge = charge, onClick = { vm.selectCharge(charge.chargeId) })
+                        ChargeItem(charge = charge, onClick = { charge.chargeId?.let { vm.selectCharge(it) } })
                     }
                 }
 

@@ -112,17 +112,17 @@ fun DriveDetailScreen(drive: DriveDto, onClose: () -> Unit) {
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "주행 상세",
-                        fontSize = 22.sp,
+                        text = "${drive.startAddress ?: "출발지"} → ${drive.endAddress ?: "도착지"}",
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary,
+                        maxLines = 2,
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text = "${drive.startAddress ?: "출발지"} → ${drive.endAddress ?: "도착지"}",
-                        fontSize = 13.sp,
+                        text = formatDateTime(drive.startDate),
+                        fontSize = 12.sp,
                         color = TextSecondary,
-                        maxLines = 2,
                     )
                 }
             }

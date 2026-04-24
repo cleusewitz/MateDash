@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.data.api.DriveDto
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class DrivingViewModel : ViewModel() {
@@ -18,6 +21,14 @@ class DrivingViewModel : ViewModel() {
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _selectedDriveId = MutableStateFlow<Int?>(null)
+    val selectedDriveId: StateFlow<Int?> = _selectedDriveId.asStateFlow()
+
+    val selectedDrive: StateFlow<DriveDto?> =
+        combine(_drives, _selectedDriveId) { list, id ->
+            if (id == null) null else list.firstOrNull { it.driveId == id }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private var loaded = false
 
@@ -41,5 +52,13 @@ class DrivingViewModel : ViewModel() {
                 _isLoading.value = false
             }
         }
+    }
+
+    fun selectDrive(id: Int?) {
+        _selectedDriveId.value = id
+    }
+
+    fun clearSelection() {
+        _selectedDriveId.value = null
     }
 }

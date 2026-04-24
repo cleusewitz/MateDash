@@ -1,5 +1,11 @@
 package com.soooool.matedash.ui.driving
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -82,6 +88,7 @@ fun DrivingScreen() {
     val drives by vm.drives.collectAsState()
     val isLoading by vm.isLoading.collectAsState()
     val errorMsg by vm.errorMessage.collectAsState()
+    val selectedDrive by vm.selectedDrive.collectAsState()
 
     // 화면 진입 시 데이터 로드
     LaunchedEffect(Unit) {
@@ -93,68 +100,84 @@ fun DrivingScreen() {
 
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBg)
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = statusBarTop + 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-
-        item {
-            Text(
-                text = "주행 기록",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-            )
-        }
-
-        if (isLoading) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DarkBg)
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(top = statusBarTop + 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             item {
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(120.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(color = TeslaRed, modifier = Modifier.size(32.dp))
+                Text(
+                    text = "주행 기록",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                )
+            }
+
+            if (isLoading) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(120.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(color = TeslaRed, modifier = Modifier.size(32.dp))
+                    }
+                }
+            } else if (errorMsg != null) {
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            text = "⚠️ $errorMsg",
+                            color = TeslaRed,
+                            fontSize = 13.sp,
+                        )
+                        Text(
+                            text = "다시 시도",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = ChargingBlue,
+                            modifier = Modifier
+                                .clickable { vm.loadDrives() }
+                                .padding(8.dp),
+                        )
+                    }
+                }
+            } else {
+                item {
+                    DriveSummaryCard(drives)
+                }
+
+                items(drives) { drive ->
+                    DriveItem(drive = drive, onClick = { vm.selectDrive(drive.driveId) })
                 }
             }
-        } else if (errorMsg != null) {
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(
-                        text = "⚠️ $errorMsg",
-                        color = TeslaRed,
-                        fontSize = 13.sp,
-                    )
-                    Text(
-                        text = "다시 시도",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = ChargingBlue,
-                        modifier = Modifier
-                            .clickable { vm.loadDrives() }
-                            .padding(8.dp),
-                    )
-                }
-            }
-        } else {
-            // 요약 카드 (최근 기록 기반)
-            item {
-                DriveSummaryCard(drives)
-            }
 
-            items(drives) { drive ->
-                DriveItem(drive)
-            }
+            item { Spacer(Modifier.height(100.dp)) }
         }
 
-        item { Spacer(Modifier.height(100.dp)) }
+        AnimatedVisibility(
+            visible = selectedDrive != null,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(300),
+            ) + fadeIn(animationSpec = tween(300)),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(250),
+            ) + fadeOut(animationSpec = tween(250)),
+        ) {
+            selectedDrive?.let { d ->
+                DriveDetailScreen(drive = d, onClose = { vm.clearSelection() })
+            }
+        }
     }
 }
 
@@ -204,7 +227,7 @@ private fun SummaryItem(label: String, value: String) {
 }
 
 @Composable
-private fun DriveItem(drive: DriveDto) {
+private fun DriveItem(drive: DriveDto, onClick: () -> Unit) {
     val distanceKm = drive.odometerDetails?.odometerDistance ?: 0.0
     val energyKwh = drive.energyConsumedNet ?: 0.0
     val durationStr = drive.durationStr ?: "${drive.durationMin ?: 0}분"
@@ -213,6 +236,7 @@ private fun DriveItem(drive: DriveDto) {
         modifier = Modifier
             .fillMaxWidth()
             .background(CardBg, RoundedCornerShape(16.dp))
+            .clickable { onClick() }
             .padding(16.dp),
     ) {
         Row(

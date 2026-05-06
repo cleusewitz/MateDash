@@ -25,14 +25,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.data.mqtt.MqttConnectionState
-import com.soooool.matedash.getPlatform
 
 @Composable
 internal fun MqttSettingsScreen(onBack: () -> Unit) {
     val settings by ServiceLocator.settingsFlow.collectAsState()
     val mqttState by ServiceLocator.repository.mqttState.collectAsState()
     val mqttError by ServiceLocator.repository.mqttError.collectAsState()
-    val isIos = getPlatform().name.lowercase().contains("ios")
 
     var host by remember { mutableStateOf(settings.mqttHost) }
     var port by remember { mutableStateOf(settings.mqttPort.toString()) }
@@ -41,22 +39,6 @@ internal fun MqttSettingsScreen(onBack: () -> Unit) {
     var enabled by remember { mutableStateOf(settings.mqttEnabled) }
 
     SettingsDetailScaffold(title = "MQTT (실시간 갱신)", onBack = onBack) {
-        if (isIos) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF3A2A0A), RoundedCornerShape(12.dp))
-                    .padding(14.dp),
-            ) {
-                Text(
-                    "iOS MQTT는 아직 네이티브 클라이언트가 연결되지 않아 동작하지 않습니다. 설정은 저장되지만 활성화 시 에러가 표시됩니다. (Android에서는 즉시 작동)",
-                    fontSize = 12.sp,
-                    color = Color(0xFFFFB76B),
-                )
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()

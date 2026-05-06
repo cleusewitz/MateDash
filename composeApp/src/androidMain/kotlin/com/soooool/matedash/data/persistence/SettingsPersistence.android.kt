@@ -39,6 +39,11 @@ actual fun saveAppSettings(settings: AppSettings) {
         ?.putString("grafana_api_key", settings.grafanaApiKey)
         ?.putString("grafana_user", settings.grafanaUser)
         ?.putString("grafana_password", settings.grafanaPassword)
+        ?.putBoolean("mqtt_enabled", settings.mqttEnabled)
+        ?.putString("mqtt_host", settings.mqttHost)
+        ?.putInt("mqtt_port", settings.mqttPort)
+        ?.putString("mqtt_username", settings.mqttUsername)
+        ?.putString("mqtt_password", settings.mqttPassword)
         ?.apply()
 }
 
@@ -55,5 +60,10 @@ actual fun loadAppSettings(): AppSettings {
         grafanaApiKey = p.getString("grafana_api_key", "") ?: "",
         grafanaUser = p.getString("grafana_user", "") ?: "",
         grafanaPassword = p.getString("grafana_password", "") ?: "",
+        mqttEnabled = p.getBoolean("mqtt_enabled", false),
+        mqttHost = p.getString("mqtt_host", "") ?: "",
+        mqttPort = p.getInt("mqtt_port", 1883),
+        mqttUsername = p.getString("mqtt_username", "") ?: "",
+        mqttPassword = p.getString("mqtt_password", "") ?: "",
     )
 }

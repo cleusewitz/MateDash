@@ -29,6 +29,7 @@ private class AppViewModel : ViewModel() {
                 try {
                     ServiceLocator.apiClient.getCarStatus(savedConfig)
                     ServiceLocator.repository.startPolling(savedConfig, ServiceLocator.appSettings.pollIntervalSeconds * 1000L)
+                    ServiceLocator.applyMqttSettings()
                     println("[MateDash] 자동 연결 성공")
                 } catch (e: Exception) {
                     println("[MateDash] 자동 연결 실패: ${e.message}")

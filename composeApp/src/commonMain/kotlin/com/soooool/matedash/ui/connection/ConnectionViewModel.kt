@@ -48,6 +48,7 @@ class ConnectionViewModel : ViewModel() {
                 ServiceLocator.repository.startPolling(config, ServiceLocator.appSettings.pollIntervalSeconds * 1000L)
                 ServiceLocator.currentConfig = config
                 saveApiConfig(config)
+                ServiceLocator.applyMqttSettings()
                 _uiState.value = _uiState.value.copy(isConnecting = false)
                 onSuccess()
             } catch (e: Exception) {

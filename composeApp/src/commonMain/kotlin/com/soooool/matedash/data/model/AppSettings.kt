@@ -16,6 +16,12 @@ data class AppSettings(
     val grafanaApiKey: String = "",
     val grafanaUser: String = "",
     val grafanaPassword: String = "",
+    // MQTT (실시간 갱신, TeslaMate 브로커 직결)
+    val mqttEnabled: Boolean = false,
+    val mqttHost: String = "",
+    val mqttPort: Int = 1883,
+    val mqttUsername: String = "",
+    val mqttPassword: String = "",
 )
 
 enum class DistanceUnit(val label: String) {

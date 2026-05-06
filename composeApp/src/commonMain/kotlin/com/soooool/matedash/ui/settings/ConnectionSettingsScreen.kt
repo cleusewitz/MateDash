@@ -40,6 +40,7 @@ internal fun ConnectionSettingsScreen(onBack: () -> Unit, onDisconnect: () -> Un
         Button(
             onClick = {
                 ServiceLocator.repository.stopPolling()
+                ServiceLocator.repository.stopMqtt()
                 ServiceLocator.currentConfig = null
                 clearApiConfig()
                 onDisconnect()

@@ -21,6 +21,11 @@ actual fun saveAppSettings(settings: AppSettings) {
     d.setObject(settings.grafanaApiKey, forKey = "settings_grafana_api_key")
     d.setObject(settings.grafanaUser, forKey = "settings_grafana_user")
     d.setObject(settings.grafanaPassword, forKey = "settings_grafana_password")
+    d.setBool(settings.mqttEnabled, forKey = "settings_mqtt_enabled")
+    d.setObject(settings.mqttHost, forKey = "settings_mqtt_host")
+    d.setInteger(settings.mqttPort.toLong(), forKey = "settings_mqtt_port")
+    d.setObject(settings.mqttUsername, forKey = "settings_mqtt_username")
+    d.setObject(settings.mqttPassword, forKey = "settings_mqtt_password")
     d.synchronize()
 }
 
@@ -39,5 +44,10 @@ actual fun loadAppSettings(): AppSettings {
         grafanaApiKey = d.stringForKey("settings_grafana_api_key") ?: "",
         grafanaUser = d.stringForKey("settings_grafana_user") ?: "",
         grafanaPassword = d.stringForKey("settings_grafana_password") ?: "",
+        mqttEnabled = d.boolForKey("settings_mqtt_enabled"),
+        mqttHost = d.stringForKey("settings_mqtt_host") ?: "",
+        mqttPort = d.integerForKey("settings_mqtt_port").toInt().let { if (it == 0) 1883 else it },
+        mqttUsername = d.stringForKey("settings_mqtt_username") ?: "",
+        mqttPassword = d.stringForKey("settings_mqtt_password") ?: "",
     )
 }

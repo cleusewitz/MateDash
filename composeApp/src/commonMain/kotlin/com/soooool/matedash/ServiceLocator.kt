@@ -6,6 +6,8 @@ import com.soooool.matedash.data.api.TeslaFleetApiClient
 import com.soooool.matedash.data.api.TeslaMateApiClient
 import com.soooool.matedash.data.model.ApiConfig
 import com.soooool.matedash.data.model.AppSettings
+import com.soooool.matedash.data.mqtt.MqttService
+import com.soooool.matedash.data.mqtt.createMqttService
 import com.soooool.matedash.data.persistence.clearTeslaApiConfig as clearTeslaApiConfigStorage
 import com.soooool.matedash.data.persistence.loadApiConfig
 import com.soooool.matedash.data.persistence.loadAppSettings
@@ -27,6 +29,24 @@ object ServiceLocator {
     val grafanaClient by lazy { GrafanaClient() }
     val teslaApiClient by lazy { TeslaFleetApiClient() }
     val vehicleDataSource: VehicleDataSource by lazy { TeslaVehicleRepository(teslaApiClient) }
+    val mqttService: MqttService by lazy { createMqttService() }
+
+    fun applyMqttSettings() {
+        val s = appSettings
+        val config = currentConfig
+        if (s.mqttEnabled && s.mqttHost.isNotBlank() && config != null) {
+            repository.startMqtt(
+                service = mqttService,
+                host = s.mqttHost,
+                port = s.mqttPort,
+                carId = config.carId,
+                username = s.mqttUsername,
+                password = s.mqttPassword,
+            )
+        } else {
+            repository.stopMqtt()
+        }
+    }
 
     private var _teslaApiConfig: TeslaApiConfig? = null
     private val _teslaConfigFlow = MutableStateFlow<TeslaApiConfig?>(null)

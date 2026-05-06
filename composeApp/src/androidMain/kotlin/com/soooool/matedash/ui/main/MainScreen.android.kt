@@ -26,7 +26,14 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -34,7 +41,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.ui.charging.ChargingScreen
+import com.soooool.matedash.ui.cluster.ClusterScreen
 import com.soooool.matedash.ui.dashboard.DashboardScreen
 import com.soooool.matedash.ui.driving.DrivingScreen
 import com.soooool.matedash.ui.settings.SettingsScreen
@@ -58,7 +67,11 @@ actual fun MainScreen(onDisconnect: () -> Unit) {
     val tabs = Tab.entries
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
+    val showCluster by ServiceLocator.clusterVisible.collectAsState()
+    val car by ServiceLocator.repository.carState.collectAsState()
+    val connState by ServiceLocator.repository.connectionState.collectAsState()
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = Color(0xFF0B0B0B),
         bottomBar = {
@@ -125,4 +138,36 @@ actual fun MainScreen(onDisconnect: () -> Unit) {
             )
         }
     }
+
+    // 클러스터 전체화면 오버레이 (탭바 포함 덮음)
+    if (showCluster) {
+        val activity = LocalContext.current as? android.app.Activity
+        DisposableEffect(Unit) {
+            activity?.window?.let { window ->
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                val controller = WindowInsetsControllerCompat(window, window.decorView)
+                controller.hide(WindowInsetsCompat.Type.systemBars())
+                controller.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+            ServiceLocator.repository.requestFastPolling(true)
+            onDispose {
+                activity?.window?.let { window ->
+                    val controller = WindowInsetsControllerCompat(window, window.decorView)
+                    controller.show(WindowInsetsCompat.Type.systemBars())
+                    WindowCompat.setDecorFitsSystemWindows(window, true)
+                    window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
+                ServiceLocator.repository.requestFastPolling(false)
+            }
+        }
+
+        ClusterScreen(
+            car = car,
+            connectionState = connState,
+            onDismiss = { ServiceLocator.clusterVisible.value = false },
+        )
+    }
+    } // Box end
 }

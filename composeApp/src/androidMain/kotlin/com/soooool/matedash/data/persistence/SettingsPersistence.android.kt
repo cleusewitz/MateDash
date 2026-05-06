@@ -30,13 +30,15 @@ private fun getPrefs(): android.content.SharedPreferences? {
 actual fun saveAppSettings(settings: AppSettings) {
     getPrefs()?.edit()
         ?.putBoolean("live_activity_enabled", settings.liveActivityEnabled)
-        ?.putBoolean("live_activity_charging", settings.liveActivityChargingEnabled)
-        ?.putBoolean("live_activity_driving", settings.liveActivityDrivingEnabled)
         ?.putBoolean("exclude_supercharger", settings.excludeSupercharger)
         ?.putString("distance_unit", settings.distanceUnit.name)
         ?.putString("temperature_unit", settings.temperatureUnit.name)
         ?.putInt("poll_interval", settings.pollIntervalSeconds)
         ?.putBoolean("map_enabled", settings.mapEnabled)
+        ?.putString("grafana_url", settings.grafanaUrl)
+        ?.putString("grafana_api_key", settings.grafanaApiKey)
+        ?.putString("grafana_user", settings.grafanaUser)
+        ?.putString("grafana_password", settings.grafanaPassword)
         ?.apply()
 }
 
@@ -44,12 +46,14 @@ actual fun loadAppSettings(): AppSettings {
     val p = getPrefs() ?: return AppSettings()
     return AppSettings(
         liveActivityEnabled = p.getBoolean("live_activity_enabled", true),
-        liveActivityChargingEnabled = p.getBoolean("live_activity_charging", true),
-        liveActivityDrivingEnabled = p.getBoolean("live_activity_driving", true),
         excludeSupercharger = p.getBoolean("exclude_supercharger", true),
         distanceUnit = try { DistanceUnit.valueOf(p.getString("distance_unit", "KM")!!) } catch (_: Exception) { DistanceUnit.KM },
         temperatureUnit = try { TemperatureUnit.valueOf(p.getString("temperature_unit", "CELSIUS")!!) } catch (_: Exception) { TemperatureUnit.CELSIUS },
         pollIntervalSeconds = p.getInt("poll_interval", 30),
         mapEnabled = p.getBoolean("map_enabled", true),
+        grafanaUrl = p.getString("grafana_url", "") ?: "",
+        grafanaApiKey = p.getString("grafana_api_key", "") ?: "",
+        grafanaUser = p.getString("grafana_user", "") ?: "",
+        grafanaPassword = p.getString("grafana_password", "") ?: "",
     )
 }

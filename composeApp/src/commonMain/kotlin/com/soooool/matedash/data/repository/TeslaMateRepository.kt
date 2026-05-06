@@ -30,6 +30,11 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
 
     private var pollingJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.Default)
+    private val _fastPollingRequested = MutableStateFlow(false)
+
+    fun requestFastPolling(enabled: Boolean) {
+        _fastPollingRequested.value = enabled
+    }
 
     fun startPolling(config: ApiConfig, pollIntervalMs: Long = 30_000L) {
         stopPolling()
@@ -48,7 +53,13 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
                     _connectionState.value = ApiConnectionState.ERROR
                     _errorMessage.value = e.message ?: "데이터 수신 실패"
                 }
-                delay(pollIntervalMs)
+                val activeStates = listOf("driving", "charging")
+                val interval = when {
+                    _fastPollingRequested.value -> 5_000L
+                    _carState.value.state.lowercase() in activeStates -> 5_000L
+                    else -> pollIntervalMs
+                }
+                delay(interval)
             }
         }
     }

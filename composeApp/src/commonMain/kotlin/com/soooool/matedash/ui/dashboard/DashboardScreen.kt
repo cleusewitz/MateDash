@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -67,6 +68,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.data.api.UpdateDto
 import com.soooool.matedash.data.model.CarState
 import com.soooool.matedash.data.repository.ApiConnectionState
@@ -132,7 +134,7 @@ fun DashboardScreen() {
             contentPadding = PaddingValues(top = statusBarTop + 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { DashboardHeader(car, connState, errorMsg) }
+            item { DashboardHeader(car, connState, errorMsg, onClusterClick = { ServiceLocator.clusterVisible.value = true }) }
             item {
                 BatteryCard(
                     car = car,
@@ -191,7 +193,7 @@ fun DashboardScreen() {
 }
 
 @Composable
-private fun DashboardHeader(car: CarState, connState: ApiConnectionState, errorMsg: String?) {
+private fun DashboardHeader(car: CarState, connState: ApiConnectionState, errorMsg: String?, onClusterClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -212,6 +214,20 @@ private fun DashboardHeader(car: CarState, connState: ApiConnectionState, errorM
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             if (car.geofence.isNotEmpty()) {
                 Text(car.geofence, fontSize = 12.sp, color = TextSecondary)
+            }
+            IconButton(
+                onClick = onClusterClick,
+                modifier = Modifier.size(32.dp),
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = CardBg,
+                    contentColor = TextPrimary,
+                ),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Speed,
+                    contentDescription = "클러스터",
+                    modifier = Modifier.size(18.dp),
+                )
             }
             ConnectionDot(connState)
             if (errorMsg != null) {

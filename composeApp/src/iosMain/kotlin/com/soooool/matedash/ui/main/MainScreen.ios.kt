@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -18,7 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.interop.UIKitViewController
 import androidx.compose.ui.window.ComposeUIViewController
+import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.ui.charging.ChargingScreen
+import com.soooool.matedash.ui.cluster.ClusterScreen
 import com.soooool.matedash.ui.dashboard.DashboardScreen
 import com.soooool.matedash.ui.driving.DrivingScreen
 import com.soooool.matedash.ui.settings.SettingsScreen
@@ -38,10 +43,33 @@ import platform.UIKit.tabBarItem
 @OptIn(ExperimentalForeignApi::class)
 @Composable
 actual fun MainScreen(onDisconnect: () -> Unit) {
-    UIKitViewController(
-        factory = { createTabBarController(onDisconnect) },
-        modifier = Modifier.fillMaxSize(),
-    )
+    val showCluster by ServiceLocator.clusterVisible.collectAsState()
+    val car by ServiceLocator.repository.carState.collectAsState()
+    val connState by ServiceLocator.repository.connectionState.collectAsState()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        UIKitViewController(
+            factory = { createTabBarController(onDisconnect) },
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        if (showCluster) {
+            DisposableEffect(Unit) {
+                platform.UIKit.UIApplication.sharedApplication.setIdleTimerDisabled(true)
+                ServiceLocator.repository.requestFastPolling(true)
+                onDispose {
+                    platform.UIKit.UIApplication.sharedApplication.setIdleTimerDisabled(false)
+                    ServiceLocator.repository.requestFastPolling(false)
+                }
+            }
+
+            ClusterScreen(
+                car = car,
+                connectionState = connState,
+                onDismiss = { ServiceLocator.clusterVisible.value = false },
+            )
+        }
+    }
 }
 
 @Composable

@@ -1,5 +1,6 @@
 package com.soooool.matedash
 
+import com.soooool.matedash.data.api.GrafanaClient
 import com.soooool.matedash.data.api.TeslaApiConfig
 import com.soooool.matedash.data.api.TeslaFleetApiClient
 import com.soooool.matedash.data.api.TeslaMateApiClient
@@ -12,6 +13,8 @@ import com.soooool.matedash.data.persistence.loadTeslaApiConfig
 import com.soooool.matedash.data.persistence.saveAppSettings
 import com.soooool.matedash.data.persistence.saveTeslaApiConfig
 import com.soooool.matedash.data.repository.TeslaMateRepository
+import com.soooool.matedash.data.repository.TeslaVehicleRepository
+import com.soooool.matedash.data.repository.VehicleDataSource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +24,10 @@ object ServiceLocator {
     val repository by lazy { TeslaMateRepository(apiClient) }
     var currentConfig: ApiConfig? = null
 
+    val grafanaClient by lazy { GrafanaClient() }
     val teslaApiClient by lazy { TeslaFleetApiClient() }
+    val vehicleDataSource: VehicleDataSource by lazy { TeslaVehicleRepository(teslaApiClient) }
+
     private var _teslaApiConfig: TeslaApiConfig? = null
     private val _teslaConfigFlow = MutableStateFlow<TeslaApiConfig?>(null)
     val teslaConfigFlow: StateFlow<TeslaApiConfig?> = _teslaConfigFlow.asStateFlow()
@@ -35,6 +41,8 @@ object ServiceLocator {
             if (value != null) saveTeslaApiConfig(value)
             else clearTeslaApiConfigStorage()
         }
+
+    val clusterVisible = MutableStateFlow(false)
 
     private val _settingsFlow = MutableStateFlow(AppSettings())
     val settingsFlow: StateFlow<AppSettings> = _settingsFlow.asStateFlow()

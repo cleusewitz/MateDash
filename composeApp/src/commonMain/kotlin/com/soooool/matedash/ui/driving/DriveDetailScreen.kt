@@ -26,13 +26,21 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.data.api.DriveDto
+import com.soooool.matedash.data.api.PositionPoint
+import com.soooool.matedash.ui.map.RouteMapView
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -75,9 +83,58 @@ private fun formatDateTime(dateStr: String?): String {
     }
 }
 
+private fun grafanaUrlFromConfig(): String? {
+    val baseUrl = ServiceLocator.currentConfig?.baseUrl ?: return null
+    return try {
+        val hostStart = baseUrl.indexOf("://") + 3
+        val hostEnd = baseUrl.indexOf(":", hostStart).takeIf { it > 0 }
+            ?: baseUrl.indexOf("/", hostStart).takeIf { it > 0 }
+            ?: baseUrl.length
+        val host = baseUrl.substring(0, hostEnd)
+        val scheme = baseUrl.substringBefore("://")
+        "$scheme://${baseUrl.substring(hostStart, hostEnd)}:3000"
+    } catch (_: Exception) { null }
+}
+
 @Composable
 fun DriveDetailScreen(drive: DriveDto, onClose: () -> Unit) {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+    var routePoints by remember { mutableStateOf<List<PositionPoint>>(emptyList()) }
+    var routeLoading by remember { mutableStateOf(false) }
+    var routeError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(drive.driveId) {
+        val settings = ServiceLocator.appSettings
+        val grafanaUrl = settings.grafanaUrl.ifBlank { grafanaUrlFromConfig() } ?: return@LaunchedEffect
+        val apiKey = settings.grafanaApiKey.ifBlank { null }
+        val grafanaUser = settings.grafanaUser.ifBlank { null }
+        val grafanaPassword = settings.grafanaPassword.ifBlank { null }
+        val startDate = drive.startDate ?: return@LaunchedEffect
+        val endDate = drive.endDate ?: return@LaunchedEffect
+        val carId = ServiceLocator.currentConfig?.carId ?: 1
+
+        routeLoading = true
+        routeError = null
+        try {
+            val points = ServiceLocator.grafanaClient.getDrivePositions(
+                grafanaUrl = grafanaUrl,
+                startDate = startDate,
+                endDate = endDate,
+                carId = carId,
+                apiKey = apiKey,
+                user = grafanaUser,
+                password = grafanaPassword,
+            )
+            routePoints = points
+            if (points.isEmpty()) routeError = "경로 데이터 없음 (${drive.startDate} ~ ${drive.endDate})"
+            else println("[MateDash] Route loaded: ${points.size} points")
+        } catch (e: Exception) {
+            routeError = "${e.message}"
+            println("[MateDash] Route error: ${e.message}")
+        }
+        routeLoading = false
+    }
 
     val distance = drive.odometerDetails?.odometerDistance
     val energy = drive.energyConsumedNet
@@ -124,6 +181,42 @@ fun DriveDetailScreen(drive: DriveDto, onClose: () -> Unit) {
                         fontSize = 12.sp,
                         color = TextSecondary,
                     )
+                }
+            }
+        }
+
+        // 경로 지도
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(CardBg, RoundedCornerShape(20.dp)),
+            ) {
+                if (routePoints.size >= 2) {
+                    RouteMapView(
+                        route = routePoints,
+                        interactive = true,
+                        modifier = Modifier.fillMaxWidth().height(220.dp),
+                    )
+                } else if (routeLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(120.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("경로 불러오는 중...", fontSize = 13.sp, color = TextSecondary)
+                    }
+                } else if (routeError != null) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(80.dp).padding(16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            routeError ?: "경로를 불러올 수 없습니다",
+                            fontSize = 12.sp,
+                            color = TextSecondary,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+                    }
                 }
             }
         }

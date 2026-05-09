@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -57,6 +58,16 @@ class ChargingViewModel : ViewModel() {
     }
 
     private var loaded = false
+
+    init {
+        // TeslaMate 재연결 시 캐시 무효화 + 자동 reload
+        viewModelScope.launch {
+            ServiceLocator.historyDataEpoch.drop(1).collect {
+                loaded = false
+                loadAllCharges()
+            }
+        }
+    }
 
     fun loadIfNeeded() {
         if (!loaded) {

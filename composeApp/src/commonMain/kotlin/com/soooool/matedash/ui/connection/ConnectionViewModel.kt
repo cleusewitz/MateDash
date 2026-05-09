@@ -103,6 +103,8 @@ class ConnectionViewModel : ViewModel() {
                 ServiceLocator.applyMqttSettings()
                 // TeslaMate 연결 성공 시 Fleet API 풀 폴러는 끔 (MQTT가 더 빠름)
                 ServiceLocator.stopFullVehiclePolling()
+                // 주행/충전 ViewModel 캐시 무효화 + 자동 reload 트리거
+                ServiceLocator.invalidateHistoryData()
                 _uiState.value = _uiState.value.copy(isConnecting = false)
                 onSuccess()
             } catch (e: Exception) {

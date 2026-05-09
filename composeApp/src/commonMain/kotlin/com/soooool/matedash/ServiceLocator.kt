@@ -92,6 +92,10 @@ object ServiceLocator {
 
     val clusterVisible = MutableStateFlow(false)
 
+    /** TeslaMate 재연결 시 증가. 주행/충전 ViewModel이 옵저빙해서 캐시 무효화 후 reload. */
+    val historyDataEpoch = MutableStateFlow(0L)
+    fun invalidateHistoryData() { historyDataEpoch.value = historyDataEpoch.value + 1 }
+
     private val _settingsFlow = MutableStateFlow(AppSettings())
     val settingsFlow: StateFlow<AppSettings> = _settingsFlow.asStateFlow()
 

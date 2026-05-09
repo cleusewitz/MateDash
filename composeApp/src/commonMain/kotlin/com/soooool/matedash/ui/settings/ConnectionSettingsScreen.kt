@@ -211,6 +211,8 @@ internal fun ConnectionSettingsScreen(onBack: () -> Unit, onDisconnect: () -> Un
                         )
                         ServiceLocator.applyMqttSettings()
                         ServiceLocator.stopFullVehiclePolling()
+                        // 주행/충전 ViewModel 캐시 무효화 → 자동 reload
+                        ServiceLocator.invalidateHistoryData()
                         status = "저장 및 연결 성공"
                     } catch (e: Exception) {
                         status = "실패: ${e.message}"

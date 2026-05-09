@@ -126,15 +126,21 @@ class GrafanaClient {
         """.trimIndent()
 
         try {
+            println("[MateDash] Grafana SQL: $sql")
             val resp = httpClient.post("$grafanaUrl/api/ds/query") {
                 auth?.let { header(it.first, it.second) }
                 contentType(ContentType.Application.Json)
                 setBody(requestBody)
             }
+            println("[MateDash] Grafana query status: ${resp.status}")
             if (!resp.status.isSuccess()) {
+                val errBody = resp.bodyAsText()
+                println("[MateDash] Grafana query errorBody: ${errBody.take(400)}")
                 throw Exception("Grafana 쿼리 실패 (${resp.status})")
             }
-            return parsePositionsResponse(resp.bodyAsText())
+            val body = resp.bodyAsText()
+            println("[MateDash] Grafana query body (first 600): ${body.take(600)}")
+            return parsePositionsResponse(body)
         } catch (e: Exception) {
             throw e
         }

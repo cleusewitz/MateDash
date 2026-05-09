@@ -54,4 +54,10 @@ data class CarState(
     val mediaAlbum: String = "",
     val mediaPlaylist: String = "",
     val mediaStatus: String = "", // Playing / Paused / Stopped
+    // 내비게이션 (Tesla 차량 active route)
+    val activeRouteDestination: String = "",
+    val activeRouteMilesToArrival: Double = 0.0,
+    val activeRouteMinutesToArrival: Int = 0,
+    val activeRouteEnergyAtArrival: Int = 0, // 도착 시 예상 배터리 %
+    val activeRouteTrafficMinutesDelay: Int = 0,
 )

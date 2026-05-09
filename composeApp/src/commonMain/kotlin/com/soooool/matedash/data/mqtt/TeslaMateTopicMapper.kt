@@ -1,11 +1,20 @@
 package com.soooool.matedash.data.mqtt
 
 import com.soooool.matedash.data.model.CarState
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+
+private val routeJson = Json { ignoreUnknownKeys = true; isLenient = true }
 
 fun CarState.applyTeslaMateTopic(attr: String, raw: String): CarState {
     // 미디어 토픽은 빈 페이로드도 의미 있음(재생 중지 시 clear)
     val isMedia = attr.startsWith("media_")
-    if (raw.isEmpty() && !isMedia) return this
+    val isRoute = attr == "active_route"
+    if (raw.isEmpty() && !isMedia && !isRoute) return this
     val s = raw.trim()
     val b = s.equals("true", ignoreCase = true)
     val i = s.toIntOrNull()
@@ -55,6 +64,39 @@ fun CarState.applyTeslaMateTopic(attr: String, raw: String): CarState {
         "media_album" -> copy(mediaAlbum = s)
         "media_playlist" -> copy(mediaPlaylist = s)
         "media_status" -> copy(mediaStatus = s)
+        // active_route — JSON 한 덩어리에 destination/도착시간/거리/배터리 등이 들어옴
+        // No active route 시: {"error":"No active route available"} → 필드 클리어
+        "active_route" -> parseActiveRoute(s) ?: clearActiveRoute()
         else -> this
     }
 }
+
+private fun CarState.parseActiveRoute(json: String): CarState? {
+    if (json.isEmpty()) return null
+    return try {
+        val obj = routeJson.parseToJsonElement(json).jsonObject
+        val error = obj["error"]?.jsonPrimitive?.contentOrNull
+        if (!error.isNullOrBlank()) return null
+        val dest = obj["destination"]?.jsonPrimitive?.contentOrNull ?: ""
+        if (dest.isBlank()) return null
+        copy(
+            activeRouteDestination = dest,
+            activeRouteMilesToArrival = obj["miles_to_arrival"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
+            activeRouteMinutesToArrival = obj["minutes_to_arrival"]?.jsonPrimitive?.doubleOrNull?.toInt()
+                ?: obj["minutes_to_arrival"]?.jsonPrimitive?.intOrNull ?: 0,
+            activeRouteEnergyAtArrival = obj["energy_at_arrival"]?.jsonPrimitive?.intOrNull ?: 0,
+            activeRouteTrafficMinutesDelay = obj["traffic_minutes_delay"]?.jsonPrimitive?.doubleOrNull?.toInt()
+                ?: obj["traffic_minutes_delay"]?.jsonPrimitive?.intOrNull ?: 0,
+        )
+    } catch (e: Exception) {
+        null
+    }
+}
+
+private fun CarState.clearActiveRoute(): CarState = copy(
+    activeRouteDestination = "",
+    activeRouteMilesToArrival = 0.0,
+    activeRouteMinutesToArrival = 0,
+    activeRouteEnergyAtArrival = 0,
+    activeRouteTrafficMinutesDelay = 0,
+)

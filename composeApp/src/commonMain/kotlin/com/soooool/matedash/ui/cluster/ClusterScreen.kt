@@ -273,7 +273,10 @@ private fun LeftPanel(car: CarState, modifier: Modifier = Modifier) {
         modifier = modifier.padding(end = 16.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        if (car.geofence.isNotEmpty()) {
+        if (car.activeRouteDestination.isNotBlank()) {
+            NavigationCard(car)
+            Spacer(Modifier.height(16.dp))
+        } else if (car.geofence.isNotEmpty()) {
             Text(car.geofence, fontSize = 16.sp, color = TextPrimary, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(16.dp))
         }
@@ -289,6 +292,103 @@ private fun LeftPanel(car: CarState, modifier: Modifier = Modifier) {
             InfoLabel("고도", "${car.elevation}m")
         }
     }
+}
+
+@Composable
+private fun NavigationCard(car: CarState) {
+    val mileToKm = 1.609344
+    val km = car.activeRouteMilesToArrival * mileToKm
+    val minutes = car.activeRouteMinutesToArrival
+    val arrival = computeArrivalTime(minutes)
+    val battery = car.activeRouteEnergyAtArrival
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF111114), RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+    ) {
+        Text(
+            text = car.activeRouteDestination,
+            color = TextPrimary,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+        )
+        Spacer(Modifier.height(10.dp))
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column {
+                Text("남은 거리", fontSize = 10.sp, color = TextDim)
+                Text(
+                    "${formatKm(km)} km",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text("예상 배터리", fontSize = 10.sp, color = TextDim)
+                Text(
+                    if (battery > 0) "$battery%" else "-",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = batteryColorFor(battery),
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column {
+                Text("도착 시간", fontSize = 10.sp, color = TextDim)
+                Text(
+                    arrival,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextPrimary,
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text("소요", fontSize = 10.sp, color = TextDim)
+                Text(
+                    if (minutes > 0) "${minutes}분" else "-",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextPrimary,
+                )
+            }
+        }
+        if (car.activeRouteTrafficMinutesDelay > 0) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "교통 지연 ${car.activeRouteTrafficMinutesDelay}분",
+                fontSize = 10.sp,
+                color = BatteryYellow,
+            )
+        }
+    }
+}
+
+private fun batteryColorFor(pct: Int): Color = when {
+    pct >= 50 -> BatteryGreen
+    pct >= 20 -> BatteryYellow
+    pct > 0 -> BatteryRed
+    else -> TextDim
+}
+
+private fun formatKm(km: Double): String {
+    val rounded = (km * 10).roundToInt()
+    return "${rounded / 10}.${kotlin.math.abs(rounded % 10)}"
+}
+
+private fun computeArrivalTime(minutesFromNow: Int): String {
+    if (minutesFromNow <= 0) return "-"
+    val now = kotlin.time.Clock.System.now()
+    val arrival = (now + kotlin.time.Duration.parse("${minutesFromNow}m"))
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+    val h = arrival.hour.toString().padStart(2, '0')
+    val m = arrival.minute.toString().padStart(2, '0')
+    return "$h:$m"
 }
 
 // ── 오른쪽 패널 (차량 상태) ──

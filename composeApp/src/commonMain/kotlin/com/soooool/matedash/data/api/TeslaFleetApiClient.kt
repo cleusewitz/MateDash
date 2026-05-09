@@ -194,7 +194,7 @@ object TeslaOAuth {
             "client_id=$clientId" +
             "&redirect_uri=$REDIRECT_URI" +
             "&response_type=code" +
-            "&scope=openid+vehicle_device_data+vehicle_cmds+vehicle_charging_cmds" +
+            "&scope=openid+offline_access+vehicle_device_data+vehicle_location+vehicle_cmds+vehicle_charging_cmds" +
             "&code_challenge=$challenge" +
             "&code_challenge_method=S256" +
             "&state=matedash"
@@ -248,7 +248,10 @@ class TeslaFleetApiClient {
     }
 
     suspend fun getVehicleData(config: TeslaApiConfig): TeslaVehicleData {
-        val url = "${config.baseUrl}/api/1/vehicles/${config.vehicleId}/vehicle_data"
+        // endpoints 명시: location_data를 포함시켜야 GPS 좌표가 옴
+        // (vehicle_location scope도 필요 — buildAuthUrl에서 요청)
+        val endpoints = "charge_state;climate_state;drive_state;location_data;vehicle_state"
+        val url = "${config.baseUrl}/api/1/vehicles/${config.vehicleId}/vehicle_data?endpoints=$endpoints"
         println("[MateDash] getVehicleData: url=$url, vehicleId=${config.vehicleId}")
         try {
             val httpResponse = httpClient.get(url) {

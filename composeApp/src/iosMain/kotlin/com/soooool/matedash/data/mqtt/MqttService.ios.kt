@@ -25,7 +25,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import platform.Foundation.NSDate
+import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSOperationQueue
 import platform.Foundation.timeIntervalSince1970
+import platform.UIKit.UIApplicationWillEnterForegroundNotification
 import platform.posix.AF_UNSPEC
 import platform.posix.SO_NOSIGPIPE
 import platform.posix.SOCK_STREAM
@@ -53,32 +56,35 @@ private class IosMqttService : MqttService {
     private val subscribers = mutableMapOf<String, (String, String) -> Unit>()
     private var readJob: Job? = null
     private var pingJob: Job? = null
+    private var reconnectJob: Job? = null
     private val keepAliveSec: Int = 60
     private var packetId: Int = 1
 
+    private var lastConfig: MqttConfig? = null
+    private var explicitDisconnect = false
+
+    init {
+        // 앱이 백그라운드에서 다시 포그라운드로 올라올 때 연결 점검.
+        // 백그라운드 동안 PINGREQ가 멈춰 broker/NAT가 만료시킨 경우 즉시 재연결.
+        NSNotificationCenter.defaultCenter.addObserverForName(
+            name = UIApplicationWillEnterForegroundNotification,
+            `object` = null,
+            queue = NSOperationQueue.mainQueue,
+        ) { _ ->
+            ensureConnected()
+        }
+    }
+
     override fun connect(config: MqttConfig, onConnected: () -> Unit, onError: (String) -> Unit) {
+        explicitDisconnect = false
+        lastConfig = config
         scope.launch {
-            try {
-                _connectionState.value = MqttConnectionState.CONNECTING
-                val fd = openSocket(config.host, config.port)
-                    ?: throw RuntimeException("소켓 연결 실패: ${config.host}:${config.port}")
-                disableSigpipe(fd)
-                sockfd = fd
-                val clientId = "MateDash-${NSDate().timeIntervalSince1970.toLong()}"
-                sendAll(fd, buildConnect(clientId, config.username, config.password, keepAliveSec))
-                val ack = readPacket(fd)
-                if (ack.type != 0x20) throw RuntimeException("CONNACK 아님: 0x${ack.type.toString(16)}")
-                val rc = ack.payload.getOrNull(1)?.toInt() ?: -1
-                if (rc != 0) throw RuntimeException("브로커가 연결 거부: code=$rc")
-                _connectionState.value = MqttConnectionState.CONNECTED
+            _connectionState.value = MqttConnectionState.CONNECTING
+            if (attemptConnect(config)) {
                 onConnected()
-                resubscribeAll(fd)
-                startReadLoop(fd)
-                startPingLoop(fd)
-            } catch (e: Exception) {
-                _connectionState.value = MqttConnectionState.ERROR
-                onError(e.message ?: "MQTT 연결 실패")
-                cleanupSocket()
+            } else {
+                onError("MQTT 첫 연결 실패 — 자동 재시도 중")
+                scheduleReconnect()
             }
         }
     }
@@ -96,6 +102,8 @@ private class IosMqttService : MqttService {
     }
 
     override fun disconnect() {
+        explicitDisconnect = true
+        reconnectJob?.cancel(); reconnectJob = null
         scope.launch {
             val fd = sockfd
             if (fd >= 0) {
@@ -105,6 +113,14 @@ private class IosMqttService : MqttService {
         }
     }
 
+    /** 외부 신호(앱 포그라운드 등)로 호출. 끊겨있고 재연결 진행 중이 아니면 즉시 재시도. */
+    private fun ensureConnected() {
+        if (explicitDisconnect || lastConfig == null) return
+        if (sockfd >= 0) return
+        if (reconnectJob?.isActive == true) return
+        scheduleReconnect()
+    }
+
     private fun cleanupSocket() {
         readJob?.cancel(); readJob = null
         pingJob?.cancel(); pingJob = null
@@ -112,14 +128,8 @@ private class IosMqttService : MqttService {
             close(sockfd)
             sockfd = -1
         }
-        if (_connectionState.value != MqttConnectionState.ERROR) {
+        if (_connectionState.value !in setOf(MqttConnectionState.RECONNECTING, MqttConnectionState.ERROR)) {
             _connectionState.value = MqttConnectionState.DISCONNECTED
-        }
-    }
-
-    private fun resubscribeAll(fd: Int) {
-        for (topic in subscribers.keys) {
-            sendAll(fd, buildSubscribe(topic, nextPacketId()))
         }
     }
 
@@ -129,6 +139,59 @@ private class IosMqttService : MqttService {
         return id
     }
 
+    /** 끊긴 후 백오프 재시도(1→2→5→10→30s 캡). 명시적 disconnect 또는 성공 시 종료. */
+    private fun scheduleReconnect() {
+        if (reconnectJob?.isActive == true) return
+        val cfg = lastConfig ?: return
+        if (explicitDisconnect) return
+        reconnectJob = scope.launch {
+            var backoff = 1_000L
+            while (isActive && !explicitDisconnect && sockfd < 0) {
+                _connectionState.value = MqttConnectionState.RECONNECTING
+                delay(backoff)
+                if (!isActive || explicitDisconnect || sockfd >= 0) break
+                if (attemptConnect(cfg)) break
+                backoff = (backoff * 2).coerceAtMost(30_000L)
+            }
+        }
+    }
+
+    /** 한 번의 연결 시도. 성공 시 read/ping 루프 시작 + 기존 구독 복구. */
+    private suspend fun attemptConnect(config: MqttConfig): Boolean {
+        if (sockfd >= 0) return true
+        return try {
+            val fd = openSocket(config.host, config.port) ?: return false
+            disableSigpipe(fd)
+            sockfd = fd
+            val clientId = "MateDash-${NSDate().timeIntervalSince1970.toLong()}"
+            sendAll(fd, buildConnect(clientId, config.username, config.password, keepAliveSec))
+            val ack = readPacket(fd)
+            if (ack.type != 0x20) {
+                close(fd); sockfd = -1
+                return false
+            }
+            val rc = ack.payload.getOrNull(1)?.toInt() ?: -1
+            if (rc != 0) {
+                close(fd); sockfd = -1
+                return false
+            }
+            _connectionState.value = MqttConnectionState.CONNECTED
+            // 기존 구독 복구
+            for (topic in subscribers.keys) {
+                try { sendAll(fd, buildSubscribe(topic, nextPacketId())) } catch (_: Exception) {}
+            }
+            startReadLoop(fd)
+            startPingLoop(fd)
+            true
+        } catch (e: Exception) {
+            if (sockfd >= 0) {
+                close(sockfd)
+                sockfd = -1
+            }
+            false
+        }
+    }
+
     private fun startReadLoop(fd: Int) {
         readJob = scope.launch {
             while (isActive && fd == sockfd) {
@@ -136,8 +199,8 @@ private class IosMqttService : MqttService {
                     readPacket(fd)
                 } catch (e: Exception) {
                     if (isActive && sockfd == fd) {
-                        _connectionState.value = MqttConnectionState.RECONNECTING
                         cleanupSocket()
+                        if (!explicitDisconnect) scheduleReconnect()
                     }
                     break
                 }
@@ -348,4 +411,3 @@ private class IosMqttService : MqttService {
         return out.toByteArray()
     }
 }
-

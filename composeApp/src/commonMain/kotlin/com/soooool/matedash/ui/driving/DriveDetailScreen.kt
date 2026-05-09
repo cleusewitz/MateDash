@@ -159,6 +159,7 @@ fun DriveDetailScreen(drive: DriveDto, onClose: () -> Unit) {
                 startDate = startDate,
                 endDate = endDate,
                 carId = carId,
+                driveId = drive.driveId,
                 apiKey = apiKey,
                 user = grafanaUser,
                 password = grafanaPassword,

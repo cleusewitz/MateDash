@@ -100,6 +100,7 @@ class GrafanaClient {
         startDate: String,
         endDate: String,
         carId: Int,
+        driveId: Int? = null,
         apiKey: String? = null,
         user: String? = null,
         password: String? = null,
@@ -108,9 +109,15 @@ class GrafanaClient {
             ?: throw Exception("Grafana datasource를 찾을 수 없습니다. URL: $grafanaUrl, 인증: ${if (!user.isNullOrBlank()) "Basic($user)" else if (!apiKey.isNullOrBlank()) "ApiKey" else "없음"}")
         val auth = authHeaders(apiKey, user, password)
 
-        val sql = "SELECT latitude, longitude FROM positions " +
-            "WHERE date >= '$startDate' AND date <= '$endDate' " +
-            "AND car_id = $carId ORDER BY date"
+        // drive_id로 직접 조회가 가장 안정적 (date 비교는 timezone 변환 이슈로 0건 나오는 사례 있음).
+        // driveId 없으면 날짜 범위로 폴백.
+        val sql = if (driveId != null) {
+            "SELECT latitude, longitude FROM positions WHERE drive_id = $driveId ORDER BY date"
+        } else {
+            "SELECT latitude, longitude FROM positions " +
+                "WHERE date >= '$startDate' AND date <= '$endDate' " +
+                "AND car_id = $carId ORDER BY date"
+        }
 
         val requestBody = """
             {

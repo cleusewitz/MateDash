@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.NearMe
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -274,22 +275,22 @@ private fun LeftPanel(car: CarState, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
     ) {
         if (car.activeRouteDestination.isNotBlank()) {
+            // 내비게이션 활성화 시 — NavigationCard만 표시 (속도는 중앙 게이지에 있음)
             NavigationCard(car)
-            Spacer(Modifier.height(16.dp))
-        } else if (car.geofence.isNotEmpty()) {
-            Text(car.geofence, fontSize = 16.sp, color = TextPrimary, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(16.dp))
-        }
-
-        InfoLabel("전력", "${car.power} kW", valueColor = if (car.power < 0) BatteryGreen else Color(0xFFFF9500))
-        Spacer(Modifier.height(14.dp))
-        InfoLabel("속도", "${car.speed} km/h")
-        Spacer(Modifier.height(14.dp))
-        InfoLabel("방위", "${headingToDirection(car.heading)} ${car.heading}°")
-
-        if (car.elevation != 0) {
+        } else {
+            if (car.geofence.isNotEmpty()) {
+                Text(car.geofence, fontSize = 16.sp, color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(16.dp))
+            }
+            InfoLabel("전력", "${car.power} kW", valueColor = if (car.power < 0) BatteryGreen else Color(0xFFFF9500))
             Spacer(Modifier.height(14.dp))
-            InfoLabel("고도", "${car.elevation}m")
+            InfoLabel("속도", "${car.speed} km/h")
+            Spacer(Modifier.height(14.dp))
+            InfoLabel("방위", "${headingToDirection(car.heading)} ${car.heading}°")
+            if (car.elevation != 0) {
+                Spacer(Modifier.height(14.dp))
+                InfoLabel("고도", "${car.elevation}m")
+            }
         }
     }
 }
@@ -302,67 +303,61 @@ private fun NavigationCard(car: CarState) {
     val arrival = computeArrivalTime(minutes)
     val battery = car.activeRouteEnergyAtArrival
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF111114), RoundedCornerShape(14.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-    ) {
-        Text(
-            text = car.activeRouteDestination,
-            color = TextPrimary,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 2,
-        )
-        Spacer(Modifier.height(10.dp))
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // 헤더: 화살표 아이콘 + 목적지 이름
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.NearMe,
+                contentDescription = null,
+                tint = ChargingBlue,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = car.activeRouteDestination,
+                color = TextPrimary,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+            )
+        }
+        Spacer(Modifier.height(14.dp))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column {
-                Text("남은 거리", fontSize = 10.sp, color = TextDim)
-                Text(
-                    "${formatKm(km)} km",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("예상 배터리", fontSize = 10.sp, color = TextDim)
-                Text(
-                    if (battery > 0) "$battery%" else "-",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = batteryColorFor(battery),
-                )
-            }
-        }
-        Spacer(Modifier.height(8.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column {
-                Text("도착 시간", fontSize = 10.sp, color = TextDim)
-                Text(
-                    arrival,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary,
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("소요", fontSize = 10.sp, color = TextDim)
-                Text(
-                    if (minutes > 0) "${minutes}분" else "-",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary,
-                )
-            }
-        }
+        Text("남은 거리", fontSize = 12.sp, color = TextDim)
+        Text(
+            "${formatKm(km)} km",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary,
+        )
+        Spacer(Modifier.height(14.dp))
+
+        Text("도착 시간", fontSize = 12.sp, color = TextDim)
+        Text(
+            arrival,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
+        )
+        Text(
+            if (minutes > 0) "${minutes}분" else "-",
+            fontSize = 14.sp,
+            color = TextDim,
+        )
+        Spacer(Modifier.height(14.dp))
+
+        Text("예상 배터리", fontSize = 12.sp, color = TextDim)
+        Text(
+            if (battery > 0) "$battery%" else "-",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = batteryColorFor(battery),
+        )
         if (car.activeRouteTrafficMinutesDelay > 0) {
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(6.dp))
             Text(
                 "교통 지연 ${car.activeRouteTrafficMinutesDelay}분",
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 color = BatteryYellow,
             )
         }

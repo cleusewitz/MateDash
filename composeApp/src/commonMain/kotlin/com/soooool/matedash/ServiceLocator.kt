@@ -6,6 +6,7 @@ import com.soooool.matedash.data.api.TeslaFleetApiClient
 import com.soooool.matedash.data.api.TeslaMateApiClient
 import com.soooool.matedash.data.model.ApiConfig
 import com.soooool.matedash.data.model.AppSettings
+import com.soooool.matedash.data.media.TeslaMediaPoller
 import com.soooool.matedash.data.mqtt.MqttService
 import com.soooool.matedash.data.mqtt.createMqttService
 import com.soooool.matedash.data.persistence.clearTeslaApiConfig as clearTeslaApiConfigStorage
@@ -30,6 +31,16 @@ object ServiceLocator {
     val teslaApiClient by lazy { TeslaFleetApiClient() }
     val vehicleDataSource: VehicleDataSource by lazy { TeslaVehicleRepository(teslaApiClient) }
     val mqttService: MqttService by lazy { createMqttService() }
+    val mediaPoller: TeslaMediaPoller by lazy { TeslaMediaPoller(teslaApiClient, repository) }
+
+    fun startMediaPolling() {
+        val cfg = teslaApiConfig ?: return
+        mediaPoller.start(cfg)
+    }
+
+    fun stopMediaPolling() {
+        mediaPoller.stop()
+    }
 
     fun applyMqttSettings() {
         val s = appSettings

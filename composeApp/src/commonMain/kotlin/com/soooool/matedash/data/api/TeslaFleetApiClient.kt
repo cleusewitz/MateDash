@@ -127,6 +127,19 @@ data class TeslaVehicleState(
     val pr: Int = 0,
     val ft: Int = 0,
     val rt: Int = 0,
+    @SerialName("media_info") val mediaInfo: TeslaMediaInfo? = null,
+)
+
+@Serializable
+data class TeslaMediaInfo(
+    @SerialName("now_playing_artist") val nowPlayingArtist: String = "",
+    @SerialName("now_playing_title") val nowPlayingTitle: String = "",
+    @SerialName("now_playing_album") val nowPlayingAlbum: String = "",
+    @SerialName("now_playing_source") val nowPlayingSource: String = "",
+    @SerialName("now_playing_station") val nowPlayingStation: String = "",
+    @SerialName("now_playing_duration") val nowPlayingDuration: Int = 0,
+    @SerialName("now_playing_elapsed") val nowPlayingElapsed: Int = 0,
+    @SerialName("audio_volume") val audioVolume: Double = 0.0,
 )
 
 @Serializable

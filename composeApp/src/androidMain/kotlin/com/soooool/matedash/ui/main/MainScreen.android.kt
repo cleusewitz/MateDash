@@ -152,6 +152,7 @@ actual fun MainScreen(onDisconnect: () -> Unit) {
                 window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
             ServiceLocator.repository.requestFastPolling(true)
+            ServiceLocator.startMediaPolling()
             onDispose {
                 activity?.window?.let { window ->
                     val controller = WindowInsetsControllerCompat(window, window.decorView)
@@ -160,6 +161,7 @@ actual fun MainScreen(onDisconnect: () -> Unit) {
                     window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 }
                 ServiceLocator.repository.requestFastPolling(false)
+                ServiceLocator.stopMediaPolling()
             }
         }
 

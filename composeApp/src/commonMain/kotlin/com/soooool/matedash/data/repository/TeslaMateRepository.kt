@@ -46,6 +46,17 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
         _fastPollingRequested.value = enabled
     }
 
+    /** 외부 미디어 소스(Tesla Fleet API 등)에서 가져온 재생 정보를 CarState에 병합 */
+    fun updateMediaInfo(title: String, artist: String, album: String, source: String, isPlaying: Boolean) {
+        _carState.value = _carState.value.copy(
+            mediaTitle = title,
+            mediaArtist = artist,
+            mediaAlbum = album,
+            mediaPlaylist = source, // playlist 자리에 source(Apple Music/Spotify 등) 표시
+            mediaStatus = if (isPlaying) "Playing" else if (title.isBlank()) "" else "Paused",
+        )
+    }
+
     fun startMqtt(service: MqttService, host: String, port: Int, carId: Int, username: String, password: String) {
         stopMqtt()
         if (host.isBlank()) {

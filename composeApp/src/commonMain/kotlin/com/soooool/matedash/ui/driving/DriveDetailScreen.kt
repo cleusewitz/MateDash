@@ -96,6 +96,24 @@ private fun grafanaUrlFromConfig(): String? {
     } catch (_: Exception) { null }
 }
 
+/** 사용자 입력이 호스트만 있을 때 http:// 와 :3000 을 자동 보충. */
+private fun normalizeGrafanaUrl(input: String): String {
+    var url = input.trim().trimEnd('/')
+    if (url.isEmpty()) return url
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = "http://$url"
+    }
+    val schemeEnd = url.indexOf("://") + 3
+    val rest = url.substring(schemeEnd)
+    val pathStart = rest.indexOf('/').takeIf { it > 0 } ?: rest.length
+    val hostPart = rest.substring(0, pathStart)
+    if (!hostPart.contains(":")) {
+        val pathSuffix = if (pathStart < rest.length) rest.substring(pathStart) else ""
+        url = "${url.substring(0, schemeEnd)}$hostPart:3000$pathSuffix"
+    }
+    return url
+}
+
 @Composable
 fun DriveDetailScreen(drive: DriveDto, onClose: () -> Unit) {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -106,7 +124,8 @@ fun DriveDetailScreen(drive: DriveDto, onClose: () -> Unit) {
 
     LaunchedEffect(drive.driveId) {
         val settings = ServiceLocator.appSettings
-        val grafanaUrl = settings.grafanaUrl.ifBlank { grafanaUrlFromConfig() } ?: return@LaunchedEffect
+        val rawGrafanaUrl = settings.grafanaUrl.ifBlank { grafanaUrlFromConfig() } ?: return@LaunchedEffect
+        val grafanaUrl = normalizeGrafanaUrl(rawGrafanaUrl)
         val apiKey = settings.grafanaApiKey.ifBlank { null }
         val grafanaUser = settings.grafanaUser.ifBlank { null }
         val grafanaPassword = settings.grafanaPassword.ifBlank { null }

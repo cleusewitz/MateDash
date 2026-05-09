@@ -85,7 +85,8 @@ private fun SettingsMenuScreen(
     val isIos = getPlatform().name.lowercase().contains("ios")
     val teslaConfig by ServiceLocator.teslaConfigFlow.collectAsState()
     val teslaConnected = teslaConfig != null && teslaConfig!!.accessToken.isNotBlank()
-    val teslaMateConnected = ServiceLocator.currentConfig != null
+    val tmConfig by ServiceLocator.currentConfigFlow.collectAsState()
+    val teslaMateConnected = tmConfig != null
     val settings by ServiceLocator.settingsFlow.collectAsState()
     val mqttState by ServiceLocator.repository.mqttState.collectAsState()
     val mqttActive = settings.mqttEnabled &&

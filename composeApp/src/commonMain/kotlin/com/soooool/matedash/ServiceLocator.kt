@@ -26,7 +26,12 @@ import kotlinx.coroutines.flow.asStateFlow
 object ServiceLocator {
     val apiClient by lazy { TeslaMateApiClient() }
     val repository by lazy { TeslaMateRepository(apiClient) }
-    var currentConfig: ApiConfig? = null
+
+    private val _currentConfigFlow = MutableStateFlow<ApiConfig?>(null)
+    val currentConfigFlow: StateFlow<ApiConfig?> = _currentConfigFlow.asStateFlow()
+    var currentConfig: ApiConfig?
+        get() = _currentConfigFlow.value
+        set(value) { _currentConfigFlow.value = value }
 
     val grafanaClient by lazy { GrafanaClient() }
     val teslaApiClient by lazy { TeslaFleetApiClient() }

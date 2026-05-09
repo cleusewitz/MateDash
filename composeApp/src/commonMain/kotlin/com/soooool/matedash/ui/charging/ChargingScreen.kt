@@ -100,7 +100,8 @@ private fun chargeEfficiency(added: Double?, used: Double?): String? {
 
 @Composable
 fun ChargingScreen() {
-    if (ServiceLocator.currentConfig == null) {
+    val config by ServiceLocator.currentConfigFlow.collectAsState()
+    if (config == null) {
         TeslaMateRequiredScreen(featureName = "충전 이력")
         return
     }

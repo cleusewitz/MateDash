@@ -86,7 +86,8 @@ private fun formatDate(dateStr: String?): String {
 
 @Composable
 fun DrivingScreen() {
-    if (ServiceLocator.currentConfig == null) {
+    val config by ServiceLocator.currentConfigFlow.collectAsState()
+    if (config == null) {
         TeslaMateRequiredScreen(featureName = "주행 이력")
         return
     }

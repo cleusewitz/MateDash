@@ -118,6 +118,7 @@ fun DashboardScreen() {
     val errorMsg by vm.errorMessage.collectAsState()
     val settings by com.soooool.matedash.ServiceLocator.settingsFlow.collectAsState()
     val updates by vm.updates.collectAsState()
+    val tmConfig by ServiceLocator.currentConfigFlow.collectAsState()
 
     var showSoftwareSheet by remember { mutableStateOf(false) }
     var showBatteryDetail by remember { mutableStateOf(false) }
@@ -146,7 +147,7 @@ fun DashboardScreen() {
                 )
             }
             // 일일 요약 — TeslaMate 연결 시에만 표시 (Fleet API는 누적 통계 미지원)
-            if (ServiceLocator.currentConfig != null) {
+            if (tmConfig != null) {
                 item {
                     val daily by vm.dailySummary.collectAsState()
                     DailySummaryCard(daily)

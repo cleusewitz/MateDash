@@ -123,15 +123,33 @@ fun DriveDetailScreen(drive: DriveDto, onClose: () -> Unit) {
     var routeError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(drive.driveId) {
+        println("[MateDash] DriveDetail entered: driveId=${drive.driveId}, start=${drive.startDate}, end=${drive.endDate}")
         val settings = ServiceLocator.appSettings
-        val rawGrafanaUrl = settings.grafanaUrl.ifBlank { grafanaUrlFromConfig() } ?: return@LaunchedEffect
+        val rawGrafanaUrl = settings.grafanaUrl.ifBlank { grafanaUrlFromConfig() }
+        if (rawGrafanaUrl.isNullOrBlank()) {
+            println("[MateDash] DriveDetail: grafanaUrl 비어있음 → 경로 로드 skip")
+            routeError = "Grafana URL 미설정"
+            return@LaunchedEffect
+        }
         val grafanaUrl = normalizeGrafanaUrl(rawGrafanaUrl)
         val apiKey = settings.grafanaApiKey.ifBlank { null }
         val grafanaUser = settings.grafanaUser.ifBlank { null }
         val grafanaPassword = settings.grafanaPassword.ifBlank { null }
-        val startDate = drive.startDate ?: return@LaunchedEffect
-        val endDate = drive.endDate ?: return@LaunchedEffect
+        val authMode = when {
+            apiKey != null -> "ApiToken"
+            grafanaUser != null && grafanaPassword != null -> "BasicAuth($grafanaUser)"
+            else -> "없음"
+        }
+        println("[MateDash] DriveDetail: grafanaUrl=$grafanaUrl, auth=$authMode")
+        val startDate = drive.startDate
+        val endDate = drive.endDate
+        if (startDate == null || endDate == null) {
+            println("[MateDash] DriveDetail: start/end date 없음 → 경로 로드 skip (start=$startDate, end=$endDate)")
+            routeError = "주행 시간 정보 없음"
+            return@LaunchedEffect
+        }
         val carId = ServiceLocator.currentConfig?.carId ?: 1
+        println("[MateDash] DriveDetail: 경로 조회 시작 carId=$carId, $startDate ~ $endDate")
 
         routeLoading = true
         routeError = null
@@ -146,8 +164,12 @@ fun DriveDetailScreen(drive: DriveDto, onClose: () -> Unit) {
                 password = grafanaPassword,
             )
             routePoints = points
-            if (points.isEmpty()) routeError = "경로 데이터 없음 (${drive.startDate} ~ ${drive.endDate})"
-            else println("[MateDash] Route loaded: ${points.size} points")
+            if (points.isEmpty()) {
+                println("[MateDash] DriveDetail: 경로 데이터 0건 (${drive.startDate} ~ ${drive.endDate})")
+                routeError = "경로 데이터 없음 (${drive.startDate} ~ ${drive.endDate})"
+            } else {
+                println("[MateDash] DriveDetail: 경로 ${points.size}개 로드 성공")
+            }
         } catch (e: Exception) {
             routeError = "${e.message}"
             println("[MateDash] Route error: ${e.message}")

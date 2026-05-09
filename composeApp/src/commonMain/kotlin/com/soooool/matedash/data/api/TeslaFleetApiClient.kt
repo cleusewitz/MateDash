@@ -250,7 +250,8 @@ class TeslaFleetApiClient {
     suspend fun getVehicleData(config: TeslaApiConfig): TeslaVehicleData {
         // endpoints 명시: location_data를 포함시켜야 GPS 좌표가 옴
         // (vehicle_location scope도 필요 — buildAuthUrl에서 요청)
-        val endpoints = "charge_state;climate_state;drive_state;location_data;vehicle_state"
+        // semicolon은 URL 쿼리에서 reserved char라 percent-encode 필수
+        val endpoints = "charge_state%3Bclimate_state%3Bdrive_state%3Blocation_data%3Bvehicle_state"
         val url = "${config.baseUrl}/api/1/vehicles/${config.vehicleId}/vehicle_data?endpoints=$endpoints"
         println("[MateDash] getVehicleData: url=$url, vehicleId=${config.vehicleId}")
         try {

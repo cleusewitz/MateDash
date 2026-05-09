@@ -46,6 +46,17 @@ class TeslaFullVehiclePoller(
     private suspend fun tick(config: TeslaApiConfig) {
         try {
             val data = client.getVehicleData(config)
+            println("[MateDash] TeslaFullVehiclePoller: parsed name='${data.displayName}' state='${data.state}' " +
+                "vs=${data.vehicleState != null} cs=${data.chargeState != null} cl=${data.climateState != null} ds=${data.driveState != null}")
+            data.vehicleState?.let {
+                println("[MateDash]   vs.odometer=${it.odometer} version='${it.carVersion}' locked=${it.locked}")
+            }
+            data.chargeState?.let {
+                println("[MateDash]   cs.battery=${it.batteryLevel}% range=${it.batteryRange}km charging='${it.chargingState}' power=${it.chargerPower}")
+            }
+            data.driveState?.let {
+                println("[MateDash]   ds.lat=${it.latitude} lng=${it.longitude} speed=${it.speed} shift='${it.shiftState}'")
+            }
             repository.updateFromFleetVehicleData(data)
             // 미디어도 같은 응답에서 같이 갱신
             val info = data.vehicleState?.mediaInfo

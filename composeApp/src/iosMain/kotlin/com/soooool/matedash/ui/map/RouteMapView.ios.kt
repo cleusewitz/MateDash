@@ -30,26 +30,27 @@ private fun buildRouteHtml(route: List<PositionPoint>): String {
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-      html,body,#map{margin:0;padding:0;width:100%;height:100%;background:#050505}
+      html,body,#map{margin:0;padding:0;width:100%;height:100%;background:#EFEFEF}
       .leaflet-control-attribution{display:none!important}
     </style>
     </head><body>
     <div id="map"></div>
     <script>
       var map = L.map('map',{zoomControl:false});
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+      // CartoDB Voyager — Apple Maps Standard와 가장 비슷한 라이트 테마, 한글 라벨 포함
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
         subdomains:'abcd',maxZoom:20
       }).addTo(map);
 
       var coords = [$coordsJson];
-      var polyline = L.polyline(coords,{color:'#00C7FF',weight:4,opacity:0.9}).addTo(map);
+      var polyline = L.polyline(coords,{color:'#0A84FF',weight:5,opacity:0.95}).addTo(map);
 
       L.circleMarker([${start.latitude},${start.longitude}],{
-        radius:6,fillColor:'#34C759',fillOpacity:1,color:'#fff',weight:2
+        radius:7,fillColor:'#34C759',fillOpacity:1,color:'#fff',weight:2
       }).addTo(map).bindPopup('출발');
 
       L.circleMarker([${end.latitude},${end.longitude}],{
-        radius:6,fillColor:'#E31937',fillOpacity:1,color:'#fff',weight:2
+        radius:7,fillColor:'#FF3B30',fillOpacity:1,color:'#fff',weight:2
       }).addTo(map).bindPopup('도착');
 
       map.fitBounds([[$latMin,$lngMin],[$latMax,$lngMax]],{padding:[30,30]});

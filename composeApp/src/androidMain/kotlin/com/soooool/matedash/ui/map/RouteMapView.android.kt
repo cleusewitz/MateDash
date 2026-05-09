@@ -14,14 +14,15 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 
-private val CartoDarkTiles = XYTileSource(
-    "CartoDB.DarkMatter",
+// Apple Maps Standard와 가장 비슷한 라이트 테마, 한글 라벨 포함
+private val CartoVoyagerTiles = XYTileSource(
+    "CartoDB.Voyager",
     0, 20, 256, ".png",
     arrayOf(
-        "https://a.basemaps.cartocdn.com/dark_all/",
-        "https://b.basemaps.cartocdn.com/dark_all/",
-        "https://c.basemaps.cartocdn.com/dark_all/",
-        "https://d.basemaps.cartocdn.com/dark_all/",
+        "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
+        "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
+        "https://c.basemaps.cartocdn.com/rastertiles/voyager/",
+        "https://d.basemaps.cartocdn.com/rastertiles/voyager/",
     ),
     "© OpenStreetMap contributors © CARTO",
 )
@@ -34,7 +35,7 @@ actual fun RouteMapView(route: List<PositionPoint>, modifier: Modifier, interact
             Configuration.getInstance().userAgentValue = "MateDash/1.0"
             Configuration.getInstance().osmdroidBasePath = context.cacheDir
             MapView(context).apply {
-                setTileSource(CartoDarkTiles)
+                setTileSource(CartoVoyagerTiles)
                 setMultiTouchControls(interactive)
                 @Suppress("DEPRECATION")
                 setBuiltInZoomControls(false)

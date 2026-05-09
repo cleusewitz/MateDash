@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.HorizontalDivider
@@ -232,13 +233,17 @@ fun DriveDetailScreen(drive: DriveDto, onClose: () -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
                     .background(CardBg, RoundedCornerShape(20.dp)),
             ) {
                 if (routePoints.size >= 2) {
                     RouteMapView(
                         route = routePoints,
                         interactive = true,
-                        modifier = Modifier.fillMaxWidth().height(220.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .clip(RoundedCornerShape(20.dp)),
                     )
                 } else if (routeLoading) {
                     Box(

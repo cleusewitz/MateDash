@@ -475,21 +475,32 @@ private fun GearIndicator(shiftState: String) {
     val gears = listOf("P", "R", "N", "D")
     val current = shiftState.uppercase().takeIf { it in gears } ?: "P"
 
-    Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         gears.forEach { gear ->
             val isActive = gear == current
-            val color = when {
-                !isActive -> TextMuted
-                gear == "R" -> BatteryRed
-                gear == "D" -> BatteryGreen
+            val activeColor = when (gear) {
+                "R" -> BatteryRed
+                "D" -> BatteryGreen
                 else -> TextPrimary
             }
-            Text(
-                text = gear,
-                fontSize = if (isActive) 22.sp else 18.sp,
-                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-                color = color,
-            )
+            // 같은 크기의 박스로 모든 글자를 동일한 width/height로 잡아 레이아웃 흔들림 방지.
+            // 활성화된 기어만 컬러 박스로 감싸 강조.
+            Box(
+                modifier = Modifier
+                    .size(width = 28.dp, height = 28.dp)
+                    .background(
+                        color = if (isActive) activeColor else Color.Transparent,
+                        shape = RoundedCornerShape(6.dp),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = gear,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isActive) Color.Black else TextMuted,
+                )
+            }
         }
     }
 }

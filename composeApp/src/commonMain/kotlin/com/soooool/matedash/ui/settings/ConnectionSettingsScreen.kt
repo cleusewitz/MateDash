@@ -65,6 +65,7 @@ internal fun ConnectionSettingsScreen(onBack: () -> Unit, onDisconnect: () -> Un
     var grafanaUrl by remember { mutableStateOf(curSettings.grafanaUrl) }
     var grafanaUser by remember { mutableStateOf(curSettings.grafanaUser) }
     var grafanaPassword by remember { mutableStateOf(curSettings.grafanaPassword) }
+    var grafanaApiKey by remember { mutableStateOf(curSettings.grafanaApiKey) }
     var isConnecting by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf<String?>(null) }
 
@@ -174,7 +175,7 @@ internal fun ConnectionSettingsScreen(onBack: () -> Unit, onDisconnect: () -> Un
             // ── Grafana 연동 (TeslaMate 스택의 일부) ──
             Text("Grafana 연동", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             Text(
-                "주행 경로 지도에 사용. TeslaMate Grafana URL과 로그인 정보 입력.",
+                "주행 경로 지도에 사용. API Token 권장 (User/Password Basic Auth가 막혀있는 경우 많음)",
                 color = TextSecondary,
                 fontSize = 11.sp,
             )
@@ -190,12 +191,27 @@ internal fun ConnectionSettingsScreen(onBack: () -> Unit, onDisconnect: () -> Un
                 keyboardType = KeyboardType.Uri,
             )
             EditField(
+                value = grafanaApiKey,
+                onValueChange = {
+                    grafanaApiKey = it.trim()
+                    ServiceLocator.appSettings = ServiceLocator.appSettings.copy(grafanaApiKey = grafanaApiKey)
+                },
+                label = "API Token (권장)",
+                placeholder = "Grafana → Service Accounts에서 발급",
+                isPassword = true,
+            )
+            Text(
+                "또는 Basic Auth (대부분 서버에서 비활성화):",
+                color = TextSecondary,
+                fontSize = 10.sp,
+            )
+            EditField(
                 value = grafanaUser,
                 onValueChange = {
                     grafanaUser = it.trim()
                     ServiceLocator.appSettings = ServiceLocator.appSettings.copy(grafanaUser = grafanaUser)
                 },
-                label = "사용자 이름",
+                label = "사용자 이름 (Basic Auth용)",
                 placeholder = "예: admin",
             )
             EditField(
@@ -204,7 +220,7 @@ internal fun ConnectionSettingsScreen(onBack: () -> Unit, onDisconnect: () -> Un
                     grafanaPassword = it.trim()
                     ServiceLocator.appSettings = ServiceLocator.appSettings.copy(grafanaPassword = grafanaPassword)
                 },
-                label = "비밀번호",
+                label = "비밀번호 (Basic Auth용)",
                 isPassword = true,
             )
         }

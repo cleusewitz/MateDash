@@ -24,6 +24,11 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
         }
+        iosTarget.compilations.getByName("main") {
+            cinterops.create("mateMapKitHelper") {
+                defFile(project.file("src/iosMain/cinterop/mateMapKitHelper.def"))
+            }
+        }
     }
     
     sourceSets {

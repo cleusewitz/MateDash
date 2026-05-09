@@ -1,0 +1,44 @@
+language = Objective-C
+package = com.soooool.matedash.mapkit
+linkerOpts = -framework MapKit -framework CoreLocation
+compilerOpts = -framework MapKit -framework CoreLocation
+---
+#import <MapKit/MapKit.h>
+#import <CoreLocation/CoreLocation.h>
+
+// CLLocationCoordinate2D 배열을 Kotlin/Native에서 직접 만들기 어려운 문제 회피 — 두 개의 double 배열을 받아서 polyline을 생성한다.
+static MKPolyline * _Nonnull MateDashMakePolyline(const double * _Nonnull lats, const double * _Nonnull lngs, NSUInteger count) {
+    if (count == 0) {
+        CLLocationCoordinate2D empty;
+        return [MKPolyline polylineWithCoordinates:&empty count:0];
+    }
+    CLLocationCoordinate2D *coords = (CLLocationCoordinate2D *)malloc(sizeof(CLLocationCoordinate2D) * count);
+    for (NSUInteger i = 0; i < count; i++) {
+        coords[i].latitude = lats[i];
+        coords[i].longitude = lngs[i];
+    }
+    MKPolyline *polyline = [MKPolyline polylineWithCoordinates:coords count:count];
+    free(coords);
+    return polyline;
+}
+
+// MKMapView의 overlay/annotation 카테고리 메서드도 Kotlin/Native 자동 binding이 누락되는 경우가 있어 helper로 노출.
+static void MateDashAddOverlay(MKMapView * _Nonnull mapView, id<MKOverlay> _Nonnull overlay) {
+    [mapView addOverlay:overlay];
+}
+
+static void MateDashAddAnnotation(MKMapView * _Nonnull mapView, id<MKAnnotation> _Nonnull annotation) {
+    [mapView addAnnotation:annotation];
+}
+
+static void MateDashClearAll(MKMapView * _Nonnull mapView) {
+    [mapView removeOverlays:mapView.overlays];
+    [mapView removeAnnotations:mapView.annotations];
+}
+
+static MKPointAnnotation * _Nonnull MateDashMakeAnnotation(double lat, double lng, NSString * _Nullable title) {
+    MKPointAnnotation *anno = [[MKPointAnnotation alloc] init];
+    anno.coordinate = CLLocationCoordinate2DMake(lat, lng);
+    if (title) anno.title = title;
+    return anno;
+}

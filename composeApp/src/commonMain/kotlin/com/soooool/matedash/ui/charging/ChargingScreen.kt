@@ -46,7 +46,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.data.api.ChargeDto
+import com.soooool.matedash.ui.common.TeslaMateRequiredScreen
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -98,6 +100,10 @@ private fun chargeEfficiency(added: Double?, used: Double?): String? {
 
 @Composable
 fun ChargingScreen() {
+    if (ServiceLocator.currentConfig == null) {
+        TeslaMateRequiredScreen(featureName = "충전 이력")
+        return
+    }
     val vm = viewModel { ChargingViewModel() }
     val filteredCharges by vm.filteredCharges.collectAsState()
     val isLoading by vm.isLoading.collectAsState()

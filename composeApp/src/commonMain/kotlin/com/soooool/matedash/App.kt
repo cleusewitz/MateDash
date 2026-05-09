@@ -22,22 +22,34 @@ private class AppViewModel : ViewModel() {
     init {
         ServiceLocator.loadSavedConfigs()
         val savedConfig = ServiceLocator.currentConfig
-        if (savedConfig != null) {
-            println("[MateDash] 저장된 TeslaMate 설정으로 자동 연결 시도: ${savedConfig.baseUrl}")
-            screen = Screen.MAIN
-            viewModelScope.launch {
-                try {
-                    ServiceLocator.apiClient.getCarStatus(savedConfig)
-                    ServiceLocator.repository.startPolling(savedConfig, ServiceLocator.appSettings.pollIntervalSeconds * 1000L)
-                    ServiceLocator.applyMqttSettings()
-                    println("[MateDash] 자동 연결 성공")
-                } catch (e: Exception) {
-                    println("[MateDash] 자동 연결 실패: ${e.message}")
-                    // 401 등 인증 실패 시 저장된 설정 초기화하고 연결 화면으로
-                    ServiceLocator.currentConfig = null
-                    clearApiConfig()
-                    screen = Screen.CONNECTION
+        val savedTesla = ServiceLocator.teslaApiConfig
+        when {
+            savedConfig != null -> {
+                println("[MateDash] 저장된 TeslaMate 설정으로 자동 연결 시도: ${savedConfig.baseUrl}")
+                screen = Screen.MAIN
+                viewModelScope.launch {
+                    try {
+                        ServiceLocator.apiClient.getCarStatus(savedConfig)
+                        ServiceLocator.repository.startPolling(savedConfig, ServiceLocator.appSettings.pollIntervalSeconds * 1000L)
+                        ServiceLocator.applyMqttSettings()
+                        println("[MateDash] 자동 연결 성공 (TeslaMate)")
+                    } catch (e: Exception) {
+                        println("[MateDash] 자동 연결 실패: ${e.message}")
+                        ServiceLocator.currentConfig = null
+                        clearApiConfig()
+                        // TeslaMate 실패해도 Fleet API 있으면 그쪽으로 fallback
+                        if (ServiceLocator.teslaApiConfig != null) {
+                            ServiceLocator.startFullVehiclePolling()
+                        } else {
+                            screen = Screen.CONNECTION
+                        }
+                    }
                 }
+            }
+            savedTesla != null && savedTesla.accessToken.isNotBlank() -> {
+                println("[MateDash] TeslaMate 없음, Tesla Fleet API 단독 모드로 진입")
+                screen = Screen.MAIN
+                ServiceLocator.startFullVehiclePolling()
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.soooool.matedash.data.repository
 
 import com.soooool.matedash.data.api.TeslaMateApiClient
+import com.soooool.matedash.data.api.TeslaVehicleData
 import com.soooool.matedash.data.api.toCarState
 import com.soooool.matedash.data.model.ApiConfig
 import com.soooool.matedash.data.model.CarState
@@ -44,6 +45,46 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
 
     fun requestFastPolling(enabled: Boolean) {
         _fastPollingRequested.value = enabled
+    }
+
+    /** Tesla Fleet API의 vehicle_data 응답을 CarState 전체에 병합 (TeslaMate 미연결 모드용) */
+    fun updateFromFleetVehicleData(data: TeslaVehicleData) {
+        val cur = _carState.value
+        val cs = data.chargeState
+        val cl = data.climateState
+        val ds = data.driveState
+        val vs = data.vehicleState
+        _carState.value = cur.copy(
+            displayName = data.displayName.ifBlank { cur.displayName },
+            state = data.state.ifBlank { cur.state },
+            odometer = vs?.odometer ?: cur.odometer,
+            softwareVersion = vs?.carVersion?.ifBlank { cur.softwareVersion } ?: cur.softwareVersion,
+            batteryLevel = cs?.batteryLevel ?: cur.batteryLevel,
+            usableBatteryLevel = cs?.usableBatteryLevel ?: cur.usableBatteryLevel,
+            estBatteryRangeKm = cs?.estBatteryRange ?: cur.estBatteryRangeKm,
+            ratedBatteryRangeKm = cs?.batteryRange ?: cur.ratedBatteryRangeKm,
+            chargeLimitSoc = cs?.chargeLimitSoc ?: cur.chargeLimitSoc,
+            isPluggedIn = cs?.chargingState?.lowercase() != "disconnected" && cs?.chargingState?.isNotBlank() == true,
+            chargingState = cs?.chargingState ?: cur.chargingState,
+            chargerPower = cs?.chargerPower ?: cur.chargerPower,
+            timeToFullCharge = cs?.timeToFullCharge ?: cur.timeToFullCharge,
+            chargePortDoorOpen = cs?.chargePortDoorOpen ?: cur.chargePortDoorOpen,
+            chargerVoltage = cs?.chargerVoltage ?: cur.chargerVoltage,
+            chargeEnergyAdded = cs?.chargeEnergyAdded ?: cur.chargeEnergyAdded,
+            speed = ds?.speed ?: cur.speed,
+            shiftState = ds?.shiftState ?: cur.shiftState,
+            heading = ds?.heading ?: cur.heading,
+            power = ds?.power ?: cur.power,
+            isClimateOn = cl?.isClimateOn ?: cur.isClimateOn,
+            insideTemp = cl?.insideTemp ?: cur.insideTemp,
+            outsideTemp = cl?.outsideTemp ?: cur.outsideTemp,
+            isPreconditioning = cl?.isPreconditioning ?: cur.isPreconditioning,
+            isLocked = vs?.locked ?: cur.isLocked,
+            sentryMode = vs?.sentryMode ?: cur.sentryMode,
+            latitude = ds?.latitude ?: cur.latitude,
+            longitude = ds?.longitude ?: cur.longitude,
+        )
+        _connectionState.value = ApiConnectionState.CONNECTED
     }
 
     /** 외부 미디어 소스(Tesla Fleet API 등)에서 가져온 재생 정보를 CarState에 병합 */

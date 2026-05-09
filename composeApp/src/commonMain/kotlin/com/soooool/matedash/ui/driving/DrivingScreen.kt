@@ -38,7 +38,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.data.api.DriveDto
+import com.soooool.matedash.ui.common.TeslaMateRequiredScreen
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -84,6 +86,10 @@ private fun formatDate(dateStr: String?): String {
 
 @Composable
 fun DrivingScreen() {
+    if (ServiceLocator.currentConfig == null) {
+        TeslaMateRequiredScreen(featureName = "주행 이력")
+        return
+    }
     val vm = viewModel { DrivingViewModel() }
     val drives by vm.drives.collectAsState()
     val isLoading by vm.isLoading.collectAsState()

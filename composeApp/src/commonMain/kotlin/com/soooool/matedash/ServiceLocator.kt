@@ -6,6 +6,7 @@ import com.soooool.matedash.data.api.TeslaFleetApiClient
 import com.soooool.matedash.data.api.TeslaMateApiClient
 import com.soooool.matedash.data.model.ApiConfig
 import com.soooool.matedash.data.model.AppSettings
+import com.soooool.matedash.data.media.TeslaFullVehiclePoller
 import com.soooool.matedash.data.media.TeslaMediaPoller
 import com.soooool.matedash.data.mqtt.MqttService
 import com.soooool.matedash.data.mqtt.createMqttService
@@ -32,6 +33,7 @@ object ServiceLocator {
     val vehicleDataSource: VehicleDataSource by lazy { TeslaVehicleRepository(teslaApiClient) }
     val mqttService: MqttService by lazy { createMqttService() }
     val mediaPoller: TeslaMediaPoller by lazy { TeslaMediaPoller(teslaApiClient, repository) }
+    val fullVehiclePoller: TeslaFullVehiclePoller by lazy { TeslaFullVehiclePoller(teslaApiClient, repository) }
 
     fun startMediaPolling() {
         val cfg = teslaApiConfig ?: return
@@ -40,6 +42,16 @@ object ServiceLocator {
 
     fun stopMediaPolling() {
         mediaPoller.stop()
+    }
+
+    /** TeslaMate 미연결 + Tesla Fleet API만 있을 때 호출 — 풀 vehicle_data 폴링 시작 */
+    fun startFullVehiclePolling() {
+        val cfg = teslaApiConfig ?: return
+        fullVehiclePoller.start(cfg)
+    }
+
+    fun stopFullVehiclePolling() {
+        fullVehiclePoller.stop()
     }
 
     fun applyMqttSettings() {

@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.ElectricCar
 import androidx.compose.material.icons.filled.Navigation
@@ -40,7 +39,6 @@ import com.soooool.matedash.getPlatform
 private enum class SettingsRoute {
     CONNECTION,
     TESLA_API,
-    MQTT,
     LIVE_ACTIVITY,
     DISPLAY,
     NAVIGATION,
@@ -61,9 +59,6 @@ fun SettingsScreen(onDisconnect: () -> Unit) {
             onDisconnect = onDisconnect,
         )
         SettingsRoute.TESLA_API -> TeslaApiSettingsScreen(
-            onBack = { currentRoute = null },
-        )
-        SettingsRoute.MQTT -> MqttSettingsScreen(
             onBack = { currentRoute = null },
         )
         SettingsRoute.LIVE_ACTIVITY -> LiveActivitySettingsScreen(
@@ -126,9 +121,13 @@ private fun SettingsMenuScreen(
             SettingsMenuItem(
                 icon = Icons.Filled.Cloud,
                 title = "TeslaMate",
-                description = "서버 연결 및 차량 데이터 소스",
+                description = "서버 + MQTT 실시간 갱신",
                 onClick = { onNavigate(SettingsRoute.CONNECTION) },
-                statusText = if (teslaMateConnected) "연결됨" else null,
+                statusText = when {
+                    teslaMateConnected && mqttActive -> "연결됨 · MQTT"
+                    teslaMateConnected -> "연결됨"
+                    else -> null
+                },
                 statusColor = BatteryGreen,
             )
             HorizontalDivider(color = Color(0xFF2C2C2E), thickness = 0.5.dp)
@@ -138,15 +137,6 @@ private fun SettingsMenuScreen(
                 description = "Tesla 계정 연동 및 가상 키 등록",
                 onClick = { onNavigate(SettingsRoute.TESLA_API) },
                 statusText = if (teslaConnected) "연결됨" else null,
-                statusColor = BatteryGreen,
-            )
-            HorizontalDivider(color = Color(0xFF2C2C2E), thickness = 0.5.dp)
-            SettingsMenuItem(
-                icon = Icons.Filled.Bolt,
-                title = "MQTT (실시간 갱신)",
-                description = "TeslaMate 브로커에서 1초 이하 지연으로 푸시",
-                onClick = { onNavigate(SettingsRoute.MQTT) },
-                statusText = if (mqttActive) "활성" else null,
                 statusColor = BatteryGreen,
             )
         }

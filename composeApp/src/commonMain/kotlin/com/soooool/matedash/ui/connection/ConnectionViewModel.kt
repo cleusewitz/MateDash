@@ -18,6 +18,11 @@ data class ConnectionUiState(
     val port: String = "9999",
     val carId: String = "1",
     val apiToken: String = "",
+    // MQTT (TeslaMate broker — host는 위와 동일하다고 가정)
+    val mqttEnabled: Boolean = false,
+    val mqttPort: String = "1883",
+    val mqttUsername: String = "",
+    val mqttPassword: String = "",
     // Tesla Direct
     val teslaBaseUrl: String = "https://fleet-api.prd.na.vn.cloud.tesla.com",
     val teslaAuthCode: String = "",
@@ -40,6 +45,14 @@ class ConnectionViewModel : ViewModel() {
         if (existing != null && existing.accessToken.isNotBlank()) {
             _uiState.value = _uiState.value.copy(teslaConnected = true)
         }
+        // 기존 MQTT 설정이 있으면 폼에 미리 채워넣음
+        val s = ServiceLocator.appSettings
+        _uiState.value = _uiState.value.copy(
+            mqttEnabled = s.mqttEnabled,
+            mqttPort = s.mqttPort.toString(),
+            mqttUsername = s.mqttUsername,
+            mqttPassword = s.mqttPassword,
+        )
     }
 
     // ── TeslaMate 입력 ──
@@ -47,6 +60,12 @@ class ConnectionViewModel : ViewModel() {
     fun onPortChange(port: String) { _uiState.value = _uiState.value.copy(port = port) }
     fun onCarIdChange(carId: String) { _uiState.value = _uiState.value.copy(carId = carId) }
     fun onApiTokenChange(token: String) { _uiState.value = _uiState.value.copy(apiToken = token) }
+
+    // ── MQTT 입력 ──
+    fun onMqttEnabledChange(v: Boolean) { _uiState.value = _uiState.value.copy(mqttEnabled = v) }
+    fun onMqttPortChange(v: String) { _uiState.value = _uiState.value.copy(mqttPort = v.filter { it.isDigit() }.take(5)) }
+    fun onMqttUsernameChange(v: String) { _uiState.value = _uiState.value.copy(mqttUsername = v) }
+    fun onMqttPasswordChange(v: String) { _uiState.value = _uiState.value.copy(mqttPassword = v) }
 
     // ── Tesla Direct 입력 ──
     fun onTeslaBaseUrlChange(url: String) { _uiState.value = _uiState.value.copy(teslaBaseUrl = url) }
@@ -73,6 +92,14 @@ class ConnectionViewModel : ViewModel() {
                 ServiceLocator.repository.startPolling(config, ServiceLocator.appSettings.pollIntervalSeconds * 1000L)
                 ServiceLocator.currentConfig = config
                 saveApiConfig(config)
+                // MQTT 설정도 같은 폼에서 받아서 AppSettings에 저장 (broker host = TeslaMate host)
+                ServiceLocator.appSettings = ServiceLocator.appSettings.copy(
+                    mqttEnabled = state.mqttEnabled,
+                    mqttHost = state.host.trim(),
+                    mqttPort = state.mqttPort.toIntOrNull() ?: 1883,
+                    mqttUsername = state.mqttUsername,
+                    mqttPassword = state.mqttPassword,
+                )
                 ServiceLocator.applyMqttSettings()
                 // TeslaMate 연결 성공 시 Fleet API 풀 폴러는 끔 (MQTT가 더 빠름)
                 ServiceLocator.stopFullVehiclePolling()

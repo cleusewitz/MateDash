@@ -167,7 +167,7 @@ private fun TeslaMateTab(
             ApiTextField(
                 value = state.port,
                 onValueChange = vm::onPortChange,
-                label = "포트",
+                label = "REST 포트",
                 placeholder = "9999",
                 keyboardType = KeyboardType.Number,
                 modifier = Modifier.weight(1f),
@@ -189,14 +189,75 @@ private fun TeslaMateTab(
             placeholder = "TeslaMate 인증 켰을 때만",
             isPassword = true,
         )
-        Spacer(Modifier.height(8.dp))
+
+        // ── MQTT 섹션 ──
+        Spacer(Modifier.height(20.dp))
+        androidx.compose.material3.HorizontalDivider(color = FieldBorder)
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("MQTT 실시간 갱신", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "broker host = 위 TeslaMate host. 활성화 시 1초 이하 푸시 갱신",
+                    color = TextSecondary,
+                    fontSize = 11.sp,
+                )
+            }
+            androidx.compose.material3.Switch(
+                checked = state.mqttEnabled,
+                onCheckedChange = vm::onMqttEnabledChange,
+                colors = androidx.compose.material3.SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = BatteryGreen,
+                    uncheckedThumbColor = TextSecondary,
+                    uncheckedTrackColor = Color(0xFF2C2C2E),
+                ),
+            )
+        }
+
+        if (state.mqttEnabled) {
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ApiTextField(
+                    value = state.mqttPort,
+                    onValueChange = vm::onMqttPortChange,
+                    label = "MQTT 포트",
+                    placeholder = "1883",
+                    keyboardType = KeyboardType.Number,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.weight(1f)) // host와 별도 입력 안 함 (위와 동일)
+            }
+            Spacer(Modifier.height(12.dp))
+            ApiTextField(
+                value = state.mqttUsername,
+                onValueChange = vm::onMqttUsernameChange,
+                label = "MQTT Username (선택)",
+                placeholder = "broker 인증 시에만",
+            )
+            Spacer(Modifier.height(12.dp))
+            ApiTextField(
+                value = state.mqttPassword,
+                onValueChange = vm::onMqttPasswordChange,
+                label = "MQTT Password (선택)",
+                placeholder = "broker 인증 시에만",
+                isPassword = true,
+            )
+        }
+
+        Spacer(Modifier.height(20.dp))
         Text(
-            "TeslaMate 연결 시: 대시보드, 클러스터, 주행/충전 이력, MQTT 1초 갱신 모두 가능",
+            "TeslaMate 연결 시: 대시보드, 클러스터, 주행/충전 이력 + MQTT 활성화 시 1초 갱신",
             color = TextSecondary,
             fontSize = 11.sp,
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
         ConnectButton(
             text = "TeslaMate 연결",
             isConnecting = state.isConnecting,

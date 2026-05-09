@@ -85,58 +85,5 @@ internal fun DisplaySettingsScreen(onBack: () -> Unit) {
             }
         }
 
-        Spacer(Modifier.height(24.dp))
-        SectionTitle("Grafana 연동")
-        Spacer(Modifier.height(8.dp))
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(CardBg, RoundedCornerShape(20.dp))
-                .padding(20.dp),
-        ) {
-            var grafanaUrl by remember { mutableStateOf(settings.grafanaUrl) }
-            var grafanaUser by remember { mutableStateOf(settings.grafanaUser) }
-            var grafanaPassword by remember { mutableStateOf(settings.grafanaPassword) }
-
-            Text(
-                "주행 경로 지도에 사용됩니다. TeslaMate Grafana URL과 로그인 정보를 입력하세요.",
-                fontSize = 11.sp,
-                color = TextSecondary,
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            TeslaTextField(
-                label = "Grafana URL (예: http://192.168.0.7:3000)",
-                value = grafanaUrl,
-                onValueChange = {
-                    grafanaUrl = it.trim()
-                    ServiceLocator.appSettings = settings.copy(grafanaUrl = grafanaUrl)
-                },
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            TeslaTextField(
-                label = "사용자 이름 (예: admin)",
-                value = grafanaUser,
-                onValueChange = {
-                    grafanaUser = it.trim()
-                    ServiceLocator.appSettings = settings.copy(grafanaUser = grafanaUser)
-                },
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            TeslaTextField(
-                label = "비밀번호",
-                value = grafanaPassword,
-                onValueChange = {
-                    grafanaPassword = it.trim()
-                    ServiceLocator.appSettings = settings.copy(grafanaPassword = grafanaPassword)
-                },
-            )
-        }
     }
 }

@@ -62,6 +62,9 @@ internal fun ConnectionSettingsScreen(onBack: () -> Unit, onDisconnect: () -> Un
     var mqttPort by remember { mutableStateOf(curSettings.mqttPort.toString()) }
     var mqttUsername by remember { mutableStateOf(curSettings.mqttUsername) }
     var mqttPassword by remember { mutableStateOf(curSettings.mqttPassword) }
+    var grafanaUrl by remember { mutableStateOf(curSettings.grafanaUrl) }
+    var grafanaUser by remember { mutableStateOf(curSettings.grafanaUser) }
+    var grafanaPassword by remember { mutableStateOf(curSettings.grafanaPassword) }
     var isConnecting by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf<String?>(null) }
 
@@ -165,6 +168,45 @@ internal fun ConnectionSettingsScreen(onBack: () -> Unit, onDisconnect: () -> Un
                     isPassword = true,
                 )
             }
+
+            HorizontalDivider(color = Color(0xFF2C2C2E))
+
+            // ── Grafana 연동 (TeslaMate 스택의 일부) ──
+            Text("Grafana 연동", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                "주행 경로 지도에 사용. TeslaMate Grafana URL과 로그인 정보 입력.",
+                color = TextSecondary,
+                fontSize = 11.sp,
+            )
+
+            EditField(
+                value = grafanaUrl,
+                onValueChange = {
+                    grafanaUrl = it.trim()
+                    ServiceLocator.appSettings = ServiceLocator.appSettings.copy(grafanaUrl = grafanaUrl)
+                },
+                label = "Grafana URL",
+                placeholder = "예: http://192.168.0.7:3000",
+                keyboardType = KeyboardType.Uri,
+            )
+            EditField(
+                value = grafanaUser,
+                onValueChange = {
+                    grafanaUser = it.trim()
+                    ServiceLocator.appSettings = ServiceLocator.appSettings.copy(grafanaUser = grafanaUser)
+                },
+                label = "사용자 이름",
+                placeholder = "예: admin",
+            )
+            EditField(
+                value = grafanaPassword,
+                onValueChange = {
+                    grafanaPassword = it.trim()
+                    ServiceLocator.appSettings = ServiceLocator.appSettings.copy(grafanaPassword = grafanaPassword)
+                },
+                label = "비밀번호",
+                isPassword = true,
+            )
         }
 
         status?.let {

@@ -249,7 +249,14 @@ internal fun ConnectionSettingsScreen(onBack: () -> Unit, onDisconnect: () -> Un
                     ServiceLocator.repository.stopMqtt()
                     ServiceLocator.currentConfig = null
                     clearApiConfig()
-                    onDisconnect()
+                    // Tesla Fleet API가 살아있으면 그쪽으로 폴링 폴백 + 메인 화면 유지.
+                    // 둘 다 없을 때만 ConnectionScreen으로 보냄.
+                    if (ServiceLocator.teslaApiConfig?.accessToken?.isNotBlank() == true) {
+                        ServiceLocator.startFullVehiclePolling()
+                        status = "TeslaMate 연결 해제됨 — Tesla Fleet API로 계속 사용 중"
+                    } else {
+                        onDisconnect()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(12.dp),

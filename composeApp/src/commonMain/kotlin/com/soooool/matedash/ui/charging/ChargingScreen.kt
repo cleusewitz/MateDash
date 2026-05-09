@@ -200,7 +200,10 @@ fun ChargingScreen() {
                         item { ChargeSummaryCard(filteredCharges) }
                     }
 
-                    items(filteredCharges) { charge ->
+                    items(
+                        items = filteredCharges,
+                        key = { it.chargeId ?: (it.startDate ?: it.hashCode()).hashCode() },
+                    ) { charge ->
                         ChargeItem(charge = charge, onClick = { charge.chargeId?.let { vm.selectCharge(it) } })
                     }
                 }

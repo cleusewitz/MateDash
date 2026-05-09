@@ -162,7 +162,10 @@ fun DrivingScreen() {
                     DriveSummaryCard(drives)
                 }
 
-                items(drives) { drive ->
+                items(
+                    items = drives,
+                    key = { it.driveId ?: (it.startDate ?: it.hashCode()).hashCode() },
+                ) { drive ->
                     DriveItem(drive = drive, onClick = { drive.driveId?.let { vm.selectDrive(it) } })
                 }
             }

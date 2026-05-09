@@ -24,6 +24,12 @@ class TeslaFullVehiclePoller(
 ) {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var pollingJob: Job? = null
+    private var fastMode: Boolean = false
+
+    /** 클러스터 화면 등 빠른 갱신이 필요한 동안 5초 주기로 단축 */
+    fun setFastMode(enabled: Boolean) {
+        fastMode = enabled
+    }
 
     fun start(config: TeslaApiConfig) {
         if (config.accessToken.isBlank() || config.vehicleId == 0L) return
@@ -32,7 +38,11 @@ class TeslaFullVehiclePoller(
             while (isActive) {
                 tick(config)
                 val state = repository.carState.value.state.lowercase()
-                val interval = if (state in listOf("driving", "charging")) 30_000L else 60_000L
+                val interval = when {
+                    fastMode -> 5_000L
+                    state in listOf("driving", "charging") -> 30_000L
+                    else -> 60_000L
+                }
                 delay(interval)
             }
         }
@@ -41,6 +51,7 @@ class TeslaFullVehiclePoller(
     fun stop() {
         pollingJob?.cancel()
         pollingJob = null
+        fastMode = false
     }
 
     private suspend fun tick(config: TeslaApiConfig) {

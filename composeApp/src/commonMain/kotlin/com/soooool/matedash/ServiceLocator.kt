@@ -54,6 +54,11 @@ object ServiceLocator {
         fullVehiclePoller.stop()
     }
 
+    /** 클러스터 표시 등 빠른 갱신 필요 시점 — 풀 폴러를 5초 주기로 단축 */
+    fun setFullVehicleFastMode(enabled: Boolean) {
+        fullVehiclePoller.setFastMode(enabled)
+    }
+
     fun applyMqttSettings() {
         val s = appSettings
         val config = currentConfig

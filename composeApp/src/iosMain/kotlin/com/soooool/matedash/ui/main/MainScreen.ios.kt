@@ -58,10 +58,12 @@ actual fun MainScreen(onDisconnect: () -> Unit) {
                 platform.UIKit.UIApplication.sharedApplication.setIdleTimerDisabled(true)
                 ServiceLocator.repository.requestFastPolling(true)
                 ServiceLocator.startMediaPolling()
+                ServiceLocator.setFullVehicleFastMode(true)
                 onDispose {
                     platform.UIKit.UIApplication.sharedApplication.setIdleTimerDisabled(false)
                     ServiceLocator.repository.requestFastPolling(false)
                     ServiceLocator.stopMediaPolling()
+                    ServiceLocator.setFullVehicleFastMode(false)
                 }
             }
 

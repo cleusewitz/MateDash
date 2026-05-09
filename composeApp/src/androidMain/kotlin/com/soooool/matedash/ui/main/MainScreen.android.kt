@@ -153,6 +153,7 @@ actual fun MainScreen(onDisconnect: () -> Unit) {
             }
             ServiceLocator.repository.requestFastPolling(true)
             ServiceLocator.startMediaPolling()
+            ServiceLocator.setFullVehicleFastMode(true)
             onDispose {
                 activity?.window?.let { window ->
                     val controller = WindowInsetsControllerCompat(window, window.decorView)
@@ -162,6 +163,7 @@ actual fun MainScreen(onDisconnect: () -> Unit) {
                 }
                 ServiceLocator.repository.requestFastPolling(false)
                 ServiceLocator.stopMediaPolling()
+                ServiceLocator.setFullVehicleFastMode(false)
             }
         }
 

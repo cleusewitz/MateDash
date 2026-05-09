@@ -47,22 +47,24 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
         _fastPollingRequested.value = enabled
     }
 
-    /** Tesla Fleet API의 vehicle_data 응답을 CarState 전체에 병합 (TeslaMate 미연결 모드용) */
+    /** Tesla Fleet API의 vehicle_data 응답을 CarState 전체에 병합 (TeslaMate 미연결 모드용).
+     * Fleet API는 distance/speed를 항상 imperial(mile, mph)로 반환하므로 km/(km/h)로 변환. */
     fun updateFromFleetVehicleData(data: TeslaVehicleData) {
         val cur = _carState.value
         val cs = data.chargeState
         val cl = data.climateState
         val ds = data.driveState
         val vs = data.vehicleState
+        val mileToKm = 1.609344
         _carState.value = cur.copy(
             displayName = data.displayName.ifBlank { cur.displayName },
             state = data.state.ifBlank { cur.state },
-            odometer = vs?.odometer ?: cur.odometer,
+            odometer = vs?.odometer?.let { it * mileToKm } ?: cur.odometer,
             softwareVersion = vs?.carVersion?.ifBlank { cur.softwareVersion } ?: cur.softwareVersion,
             batteryLevel = cs?.batteryLevel ?: cur.batteryLevel,
             usableBatteryLevel = cs?.usableBatteryLevel ?: cur.usableBatteryLevel,
-            estBatteryRangeKm = cs?.estBatteryRange ?: cur.estBatteryRangeKm,
-            ratedBatteryRangeKm = cs?.batteryRange ?: cur.ratedBatteryRangeKm,
+            estBatteryRangeKm = cs?.estBatteryRange?.let { it * mileToKm } ?: cur.estBatteryRangeKm,
+            ratedBatteryRangeKm = cs?.batteryRange?.let { it * mileToKm } ?: cur.ratedBatteryRangeKm,
             chargeLimitSoc = cs?.chargeLimitSoc ?: cur.chargeLimitSoc,
             isPluggedIn = cs?.chargingState?.lowercase() != "disconnected" && cs?.chargingState?.isNotBlank() == true,
             chargingState = cs?.chargingState ?: cur.chargingState,
@@ -71,7 +73,7 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
             chargePortDoorOpen = cs?.chargePortDoorOpen ?: cur.chargePortDoorOpen,
             chargerVoltage = cs?.chargerVoltage ?: cur.chargerVoltage,
             chargeEnergyAdded = cs?.chargeEnergyAdded ?: cur.chargeEnergyAdded,
-            speed = ds?.speed ?: cur.speed,
+            speed = ds?.speed?.let { (it * mileToKm).toInt() } ?: cur.speed,
             shiftState = ds?.shiftState ?: cur.shiftState,
             heading = ds?.heading ?: cur.heading,
             power = ds?.power ?: cur.power,

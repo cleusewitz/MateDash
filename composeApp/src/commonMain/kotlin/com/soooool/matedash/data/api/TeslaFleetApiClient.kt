@@ -197,7 +197,10 @@ object TeslaOAuth {
             "&scope=openid+offline_access+vehicle_device_data+vehicle_location+vehicle_cmds+vehicle_charging_cmds" +
             "&code_challenge=$challenge" +
             "&code_challenge_method=S256" +
-            "&state=matedash"
+            "&state=matedash" +
+            // 이전 동의 캐시 무시하고 동의 화면 강제 표시 — 새로 추가된 scope(vehicle_location)을
+            // 토큰에 포함시키려면 사용자가 그 scope에 명시적으로 동의해야 함
+            "&prompt=consent"
     }
 
     fun getCodeVerifier(): String? = codeVerifier

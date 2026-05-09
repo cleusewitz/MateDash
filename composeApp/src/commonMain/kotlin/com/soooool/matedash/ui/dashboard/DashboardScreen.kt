@@ -145,10 +145,12 @@ fun DashboardScreen() {
                     },
                 )
             }
-            // 일일 요약
-            item {
-                val daily by vm.dailySummary.collectAsState()
-                DailySummaryCard(daily)
+            // 일일 요약 — TeslaMate 연결 시에만 표시 (Fleet API는 누적 통계 미지원)
+            if (ServiceLocator.currentConfig != null) {
+                item {
+                    val daily by vm.dailySummary.collectAsState()
+                    DailySummaryCard(daily)
+                }
             }
             if (settings.mapEnabled) {
                 item { LocationCard(car) }

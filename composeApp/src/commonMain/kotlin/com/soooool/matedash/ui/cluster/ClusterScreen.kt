@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import com.soooool.matedash.data.media.NowPlayingInfo
-import com.soooool.matedash.data.media.getNowPlaying
 import com.soooool.matedash.data.model.CarState
 import com.soooool.matedash.data.repository.ApiConnectionState
 import com.soooool.matedash.ui.util.toDisplayKm
@@ -76,13 +75,14 @@ fun ClusterScreen(
     connectionState: ApiConnectionState = ApiConnectionState.CONNECTED,
     onDismiss: () -> Unit,
 ) {
-    var nowPlaying by remember { mutableStateOf(getNowPlaying()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(2000)
-            nowPlaying = getNowPlaying()
-        }
-    }
+    // TeslaMate가 publish하는 차량 미디어 정보를 사용 (iOS/Android 무관, MQTT 활성 시 1초 갱신)
+    val nowPlaying: NowPlayingInfo? = if (car.mediaTitle.isNotBlank()) {
+        NowPlayingInfo(
+            title = car.mediaTitle,
+            artist = car.mediaArtist,
+            isPlaying = car.mediaStatus.equals("Playing", ignoreCase = true),
+        )
+    } else null
 
     Box(
         modifier = Modifier

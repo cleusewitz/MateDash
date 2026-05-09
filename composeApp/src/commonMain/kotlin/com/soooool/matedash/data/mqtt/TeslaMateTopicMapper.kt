@@ -3,7 +3,9 @@ package com.soooool.matedash.data.mqtt
 import com.soooool.matedash.data.model.CarState
 
 fun CarState.applyTeslaMateTopic(attr: String, raw: String): CarState {
-    if (raw.isEmpty()) return this
+    // 미디어 토픽은 빈 페이로드도 의미 있음(재생 중지 시 clear)
+    val isMedia = attr.startsWith("media_")
+    if (raw.isEmpty() && !isMedia) return this
     val s = raw.trim()
     val b = s.equals("true", ignoreCase = true)
     val i = s.toIntOrNull()
@@ -48,6 +50,11 @@ fun CarState.applyTeslaMateTopic(attr: String, raw: String): CarState {
         "tpms_pressure_fr" -> d?.let { copy(tpmsFr = it) } ?: this
         "tpms_pressure_rl" -> d?.let { copy(tpmsRl = it) } ?: this
         "tpms_pressure_rr" -> d?.let { copy(tpmsRr = it) } ?: this
+        "media_title" -> copy(mediaTitle = s)
+        "media_artist" -> copy(mediaArtist = s)
+        "media_album" -> copy(mediaAlbum = s)
+        "media_playlist" -> copy(mediaPlaylist = s)
+        "media_status" -> copy(mediaStatus = s)
         else -> this
     }
 }

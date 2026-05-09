@@ -48,4 +48,10 @@ data class CarState(
     val tpmsFr: Double = 0.0,
     val tpmsRl: Double = 0.0,
     val tpmsRr: Double = 0.0,
+    // 미디어 (TeslaMate가 차량 vehicle_state에서 가져와 publish)
+    val mediaTitle: String = "",
+    val mediaArtist: String = "",
+    val mediaAlbum: String = "",
+    val mediaPlaylist: String = "",
+    val mediaStatus: String = "", // Playing / Paused / Stopped
 )

@@ -37,10 +37,6 @@ struct ContentView: View {
             DispatchQueue.main.async {
                 isReady = true
             }
-            // NowPlayingMonitor는 framework loader가 안정된 뒤 시작
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                NowPlayingMonitor.shared.startMonitoring()
-            }
         }
     }
 }

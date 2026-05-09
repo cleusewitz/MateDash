@@ -5,5 +5,3 @@ data class NowPlayingInfo(
     val artist: String,
     val isPlaying: Boolean = false,
 )
-
-expect fun getNowPlaying(): NowPlayingInfo?

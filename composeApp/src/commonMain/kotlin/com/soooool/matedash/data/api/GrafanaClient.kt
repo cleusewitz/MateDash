@@ -60,12 +60,23 @@ class GrafanaClient {
         cachedDatasourceUid?.let { return it }
         try {
             val auth = authHeaders(apiKey, user, password)
+            // 진단용: 실제 전송하는 자격증명 정보 (비밀번호는 길이만)
+            val authDesc = when {
+                !apiKey.isNullOrBlank() -> "ApiKey(len=${apiKey.length})"
+                !user.isNullOrBlank() && !password.isNullOrBlank() -> "Basic(user='$user', pwLen=${password.length})"
+                !user.isNullOrBlank() -> "user='$user'이지만 password 비어있음 → 인증 헤더 안 보냄"
+                else -> "인증 정보 없음"
+            }
+            println("[MateDash] Grafana auth: $authDesc")
             println("[MateDash] Grafana: finding datasource at $grafanaUrl/api/datasources")
             val resp = httpClient.get("$grafanaUrl/api/datasources") {
                 auth?.let { header(it.first, it.second) }
             }
             println("[MateDash] Grafana datasources status: ${resp.status}")
-            if (!resp.status.isSuccess()) return null
+            if (!resp.status.isSuccess()) {
+                println("[MateDash] Grafana datasources errorBody: ${resp.bodyAsText().take(200)}")
+                return null
+            }
             val body = resp.bodyAsText()
             val arr = json.parseToJsonElement(body).jsonArray
             for (ds in arr) {

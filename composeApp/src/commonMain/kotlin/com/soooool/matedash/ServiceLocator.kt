@@ -40,6 +40,25 @@ object ServiceLocator {
     val mediaPoller: TeslaMediaPoller by lazy { TeslaMediaPoller(teslaApiClient, repository) }
     val fullVehiclePoller: TeslaFullVehiclePoller by lazy { TeslaFullVehiclePoller(teslaApiClient, repository) }
 
+    /** Tesla access token이 만료(401)됐을 때 refresh_token으로 새 토큰 발급 후 teslaApiConfig 갱신.
+     *  성공 시 true (호출자가 재시도 가능). */
+    suspend fun refreshTeslaToken(): Boolean {
+        val cfg = teslaApiConfig ?: return false
+        if (cfg.refreshToken.isBlank() || cfg.clientId.isBlank()) return false
+        return try {
+            val newToken = teslaApiClient.refreshAccessToken(cfg.clientId, cfg.refreshToken)
+            teslaApiConfig = cfg.copy(
+                accessToken = newToken.accessToken,
+                refreshToken = newToken.refreshToken.ifBlank { cfg.refreshToken },
+            )
+            println("[MateDash] Tesla token 갱신 성공")
+            true
+        } catch (e: Exception) {
+            println("[MateDash] Tesla token 갱신 실패: ${e.message}")
+            false
+        }
+    }
+
     fun startMediaPolling() {
         val cfg = teslaApiConfig ?: return
         mediaPoller.start(cfg)

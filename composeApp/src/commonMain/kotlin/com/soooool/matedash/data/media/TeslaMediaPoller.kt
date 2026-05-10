@@ -1,7 +1,9 @@
 package com.soooool.matedash.data.media
 
+import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.data.api.TeslaApiConfig
 import com.soooool.matedash.data.api.TeslaFleetApiClient
+import com.soooool.matedash.data.api.TeslaVehicleData
 import com.soooool.matedash.data.repository.TeslaMateRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,22 +49,35 @@ class TeslaMediaPoller(
         // 차가 online일 때만 폴링 (asleep 상태에서 vehicle_data 호출 시 깨우는 부작용 방지)
         val carState = repository.carState.value
         if (carState.state.lowercase() != "online") return
-        try {
-            val data = client.getVehicleData(config)
-            val info = data.vehicleState?.mediaInfo
-            if (info != null) {
-                val isPlaying = info.nowPlayingTitle.isNotBlank() && info.nowPlayingDuration > 0 &&
-                    info.nowPlayingElapsed in 1..(info.nowPlayingDuration - 1)
-                repository.updateMediaInfo(
-                    title = info.nowPlayingTitle,
-                    artist = info.nowPlayingArtist,
-                    album = info.nowPlayingAlbum,
-                    source = info.nowPlayingSource,
-                    isPlaying = isPlaying || info.nowPlayingTitle.isNotBlank(),
-                )
-            }
+        val data = try {
+            fetchWithRefresh(config)
         } catch (e: Exception) {
             println("[MateDash] TeslaMediaPoller: tick error=${e.message}")
+            return
+        }
+        val info = data.vehicleState?.mediaInfo
+        if (info != null) {
+            val isPlaying = info.nowPlayingTitle.isNotBlank() && info.nowPlayingDuration > 0 &&
+                info.nowPlayingElapsed in 1..(info.nowPlayingDuration - 1)
+            repository.updateMediaInfo(
+                title = info.nowPlayingTitle,
+                artist = info.nowPlayingArtist,
+                album = info.nowPlayingAlbum,
+                source = info.nowPlayingSource,
+                isPlaying = isPlaying || info.nowPlayingTitle.isNotBlank(),
+            )
+        }
+    }
+
+    /** 401 받으면 refresh_token으로 새 토큰 발급 후 한 번만 재시도. */
+    private suspend fun fetchWithRefresh(config: TeslaApiConfig): TeslaVehicleData {
+        return try {
+            client.getVehicleData(config)
+        } catch (e: Exception) {
+            if (e.message?.contains("401") != true) throw e
+            if (!ServiceLocator.refreshTeslaToken()) throw e
+            val fresh = ServiceLocator.teslaApiConfig ?: throw e
+            client.getVehicleData(fresh)
         }
     }
 }

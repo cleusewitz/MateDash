@@ -275,20 +275,11 @@ private fun LeftPanel(car: CarState, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
     ) {
         if (car.activeRouteDestination.isNotBlank()) {
-            // 내비 활성화 시 — NavigationCard만 표시. 전력은 오른쪽 음악 아래로 이동.
+            // 내비 활성화 시 — NavigationCard만 표시
             NavigationCard(car)
-        } else {
-            if (car.geofence.isNotEmpty()) {
-                Text(car.geofence, fontSize = 16.sp, color = TextPrimary, fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(16.dp))
-            }
-            InfoLabel("속도", "${car.speed} km/h")
-            Spacer(Modifier.height(14.dp))
-            InfoLabel("방위", "${headingToDirection(car.heading)} ${car.heading}°")
-            if (car.elevation != 0) {
-                Spacer(Modifier.height(14.dp))
-                InfoLabel("고도", "${car.elevation}m")
-            }
+        } else if (car.geofence.isNotEmpty()) {
+            // 내비 미설정 시 — geofence(위치) 이름만 가볍게
+            Text(car.geofence, fontSize = 16.sp, color = TextPrimary, fontWeight = FontWeight.SemiBold)
         }
     }
 }

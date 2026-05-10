@@ -1,7 +1,9 @@
 package com.soooool.matedash.data.media
 
+import com.soooool.matedash.ServiceLocator
 import com.soooool.matedash.data.api.TeslaApiConfig
 import com.soooool.matedash.data.api.TeslaFleetApiClient
+import com.soooool.matedash.data.api.TeslaVehicleData
 import com.soooool.matedash.data.repository.TeslaMateRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +58,7 @@ class TeslaFullVehiclePoller(
 
     private suspend fun tick(config: TeslaApiConfig) {
         try {
-            val data = client.getVehicleData(config)
+            val data = fetchWithRefresh(config)
             println("[MateDash] TeslaFullVehiclePoller: parsed name='${data.displayName}' state='${data.state}' " +
                 "vs=${data.vehicleState != null} cs=${data.chargeState != null} cl=${data.climateState != null} ds=${data.driveState != null}")
             data.vehicleState?.let {
@@ -84,6 +86,18 @@ class TeslaFullVehiclePoller(
             }
         } catch (e: Exception) {
             println("[MateDash] TeslaFullVehiclePoller: tick error=${e.message}")
+        }
+    }
+
+    /** 401 받으면 refresh_token으로 새 토큰 발급 후 한 번만 재시도. */
+    private suspend fun fetchWithRefresh(config: TeslaApiConfig): TeslaVehicleData {
+        return try {
+            client.getVehicleData(config)
+        } catch (e: Exception) {
+            if (e.message?.contains("401") != true) throw e
+            if (!ServiceLocator.refreshTeslaToken()) throw e
+            val fresh = ServiceLocator.teslaApiConfig ?: throw e
+            client.getVehicleData(fresh)
         }
     }
 }

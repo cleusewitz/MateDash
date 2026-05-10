@@ -71,6 +71,7 @@ class TeslaFullVehiclePoller(
                 println("[MateDash]   ds.lat=${it.latitude} lng=${it.longitude} speed=${it.speed} shift='${it.shiftState}'")
             }
             repository.updateFromFleetVehicleData(data)
+            repository.updateActiveRouteFromFleet(data.driveState)
             // 미디어도 같은 응답에서 같이 갱신
             val info = data.vehicleState?.mediaInfo
             if (info != null && info.nowPlayingTitle.isNotBlank()) {

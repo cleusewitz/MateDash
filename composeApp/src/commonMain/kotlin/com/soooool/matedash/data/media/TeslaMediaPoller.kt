@@ -69,6 +69,9 @@ class TeslaMediaPoller(
                 isPlaying = isPlaying || info.nowPlayingTitle.isNotBlank(),
             )
         }
+
+        // 같은 응답에서 active_route 정보도 갱신 — TeslaMate MQTT의 느린 폴링 보강 (5초 보장)
+        repository.updateActiveRouteFromFleet(data.driveState)
     }
 
     /** 401 받으면 refresh_token으로 새 토큰 발급 후 한 번만 재시도. */

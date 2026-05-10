@@ -97,6 +97,26 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
         _connectionState.value = ApiConnectionState.CONNECTED
     }
 
+    /** Fleet API의 drive_state.active_route_* 필드를 CarState에 병합.
+     *  TeslaMate MQTT의 폴링이 느릴 때 Fleet API 직접 폴링으로 보강 (5초 보장). */
+    fun updateActiveRouteFromFleet(ds: com.soooool.matedash.data.api.TeslaDriveState?) {
+        if (ds == null) return
+        val dest = ds.activeRouteDestination
+        // 유효한 destination이 있을 때만 갱신. nil/blank는 클리어 디바운스 로직이 처리.
+        if (!dest.isNullOrBlank()) {
+            _carState.value = _carState.value.copy(
+                activeRouteDestination = dest,
+                activeRouteMilesToArrival = ds.activeRouteMilesToArrival ?: 0.0,
+                activeRouteMinutesToArrival = ds.activeRouteMinutesToArrival?.toInt() ?: 0,
+                activeRouteEnergyAtArrival = ds.activeRouteEnergyAtArrival ?: 0,
+                activeRouteTrafficMinutesDelay = ds.activeRouteTrafficMinutesDelay?.toInt() ?: 0,
+            )
+            // 유효 신호 받았으니 디바운스 클리어 예약 취소
+            pendingClearActiveRouteJob?.cancel()
+            pendingClearActiveRouteJob = null
+        }
+    }
+
     /** 외부 미디어 소스(Tesla Fleet API 등)에서 가져온 재생 정보를 CarState에 병합.
      *  곡이 바뀌면 iTunes Search로 앨범 아트 URL을 백그라운드에서 채움. */
     fun updateMediaInfo(title: String, artist: String, album: String, source: String, isPlaying: Boolean) {

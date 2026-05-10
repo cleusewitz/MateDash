@@ -109,6 +109,13 @@ data class TeslaDriveState(
     val longitude: Double = 0.0,
     @SerialName("shift_state") val shiftState: String? = null,
     val power: Int = 0,
+    @SerialName("active_route_destination") val activeRouteDestination: String? = null,
+    @SerialName("active_route_latitude") val activeRouteLatitude: Double? = null,
+    @SerialName("active_route_longitude") val activeRouteLongitude: Double? = null,
+    @SerialName("active_route_miles_to_arrival") val activeRouteMilesToArrival: Double? = null,
+    @SerialName("active_route_minutes_to_arrival") val activeRouteMinutesToArrival: Double? = null,
+    @SerialName("active_route_traffic_minutes_delay") val activeRouteTrafficMinutesDelay: Double? = null,
+    @SerialName("active_route_energy_at_arrival") val activeRouteEnergyAtArrival: Int? = null,
 )
 
 @Serializable

@@ -89,15 +89,30 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
         _connectionState.value = ApiConnectionState.CONNECTED
     }
 
-    /** 외부 미디어 소스(Tesla Fleet API 등)에서 가져온 재생 정보를 CarState에 병합 */
+    /** 외부 미디어 소스(Tesla Fleet API 등)에서 가져온 재생 정보를 CarState에 병합.
+     *  곡이 바뀌면 iTunes Search로 앨범 아트 URL을 백그라운드에서 채움. */
     fun updateMediaInfo(title: String, artist: String, album: String, source: String, isPlaying: Boolean) {
-        _carState.value = _carState.value.copy(
+        val cur = _carState.value
+        val isNewSong = cur.mediaTitle != title || cur.mediaArtist != artist
+        _carState.value = cur.copy(
             mediaTitle = title,
             mediaArtist = artist,
             mediaAlbum = album,
-            mediaPlaylist = source, // playlist 자리에 source(Apple Music/Spotify 등) 표시
+            mediaPlaylist = source,
             mediaStatus = if (isPlaying) "Playing" else if (title.isBlank()) "" else "Paused",
+            // 새 곡이면 일단 아트 URL 비움 (낡은 이미지 표시 방지). iTunes 검색 결과 도착 시 채워짐.
+            mediaArtworkUrl = if (isNewSong) "" else cur.mediaArtworkUrl,
         )
+        if (isNewSong && title.isNotBlank()) {
+            scope.launch {
+                val url = com.soooool.matedash.ServiceLocator.itunesSearchClient.findArtworkUrl(title, artist)
+                // 검색 동안 곡이 또 바뀌었을 수 있음 — 현재 곡과 일치할 때만 적용
+                val now = _carState.value
+                if (url.isNotBlank() && now.mediaTitle == title && now.mediaArtist == artist) {
+                    _carState.value = now.copy(mediaArtworkUrl = url)
+                }
+            }
+        }
     }
 
     fun startMqtt(service: MqttService, host: String, port: Int, carId: Int, username: String, password: String) {

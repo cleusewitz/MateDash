@@ -1,6 +1,7 @@
 package com.soooool.matedash
 
 import com.soooool.matedash.data.api.GrafanaClient
+import com.soooool.matedash.data.api.ItunesSearchClient
 import com.soooool.matedash.data.api.TeslaApiConfig
 import com.soooool.matedash.data.api.TeslaFleetApiClient
 import com.soooool.matedash.data.api.TeslaMateApiClient
@@ -35,6 +36,7 @@ object ServiceLocator {
 
     val grafanaClient by lazy { GrafanaClient() }
     val teslaApiClient by lazy { TeslaFleetApiClient() }
+    val itunesSearchClient by lazy { ItunesSearchClient() }
     val vehicleDataSource: VehicleDataSource by lazy { TeslaVehicleRepository(teslaApiClient) }
     val mqttService: MqttService by lazy { createMqttService() }
     val mediaPoller: TeslaMediaPoller by lazy { TeslaMediaPoller(teslaApiClient, repository) }

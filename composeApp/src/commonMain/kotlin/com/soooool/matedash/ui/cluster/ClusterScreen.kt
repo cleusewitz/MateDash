@@ -30,6 +30,8 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -83,6 +85,7 @@ fun ClusterScreen(
             title = car.mediaTitle,
             artist = car.mediaArtist,
             isPlaying = car.mediaStatus.equals("Playing", ignoreCase = true),
+            artworkUrl = car.mediaArtworkUrl,
         )
     } else null
 
@@ -426,18 +429,27 @@ private fun NowPlayingCard(info: NowPlayingInfo?) {
         Box(
             modifier = Modifier
                 .size(40.dp)
+                .clip(RoundedCornerShape(10.dp))
                 .background(
                     if (info != null) ChargingBlue.copy(alpha = 0.15f) else Color(0xFF2C2C2E),
-                    RoundedCornerShape(10.dp),
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                Icons.Filled.MusicNote,
-                contentDescription = null,
-                tint = if (info != null) ChargingBlue else TextMuted,
-                modifier = Modifier.size(22.dp),
-            )
+            if (info != null && info.artworkUrl.isNotBlank()) {
+                coil3.compose.AsyncImage(
+                    model = info.artworkUrl,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                )
+            } else {
+                Icon(
+                    Icons.Filled.MusicNote,
+                    contentDescription = null,
+                    tint = if (info != null) ChargingBlue else TextMuted,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
         }
         Column(modifier = Modifier.weight(1f)) {
             if (info != null) {
@@ -447,6 +459,7 @@ private fun NowPlayingCard(info: NowPlayingInfo?) {
                     fontWeight = FontWeight.Medium,
                     color = TextPrimary,
                     maxLines = 1,
+                    modifier = Modifier.basicMarquee(),
                 )
                 if (info.artist.isNotBlank()) {
                     Text(
@@ -454,6 +467,7 @@ private fun NowPlayingCard(info: NowPlayingInfo?) {
                         fontSize = 11.sp,
                         color = TextDim,
                         maxLines = 1,
+                        modifier = Modifier.basicMarquee(),
                     )
                 }
             } else {

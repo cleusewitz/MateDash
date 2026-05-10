@@ -54,6 +54,7 @@ data class CarState(
     val mediaAlbum: String = "",
     val mediaPlaylist: String = "",
     val mediaStatus: String = "", // Playing / Paused / Stopped
+    val mediaArtworkUrl: String = "", // iTunes Search API에서 가져온 앨범 아트 URL
     // 내비게이션 (Tesla 차량 active route)
     val activeRouteDestination: String = "",
     val activeRouteMilesToArrival: Double = 0.0,

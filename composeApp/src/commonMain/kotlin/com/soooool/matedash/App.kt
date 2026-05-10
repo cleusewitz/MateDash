@@ -7,6 +7,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.compose.setSingletonImageLoaderFactory
+import coil3.network.ktor3.KtorNetworkFetcherFactory
 import com.soooool.matedash.data.persistence.clearApiConfig
 import com.soooool.matedash.ui.connection.ConnectionScreen
 import com.soooool.matedash.ui.main.MainScreen
@@ -59,6 +63,12 @@ private class AppViewModel : ViewModel() {
 
 @Composable
 fun App() {
+    // Coil3 이미지 로더 셋업 (Ktor3 fetcher 사용 — 우리 ktor 의존성과 통합)
+    setSingletonImageLoaderFactory { ctx ->
+        ImageLoader.Builder(ctx)
+            .components { add(KtorNetworkFetcherFactory()) }
+            .build()
+    }
     AppTheme {
         val vm = viewModel { AppViewModel() }
 

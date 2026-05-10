@@ -27,7 +27,7 @@ class TeslaMediaPoller(
 ) {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var pollingJob: Job? = null
-    private val intervalMs = 30_000L // 30초
+    private val intervalMs = 5_000L // 5초 — 음악/내비 빠른 갱신
 
     fun start(config: TeslaApiConfig) {
         if (config.accessToken.isBlank() || config.vehicleId == 0L) return

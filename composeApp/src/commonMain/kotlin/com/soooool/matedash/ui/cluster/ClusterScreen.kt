@@ -181,12 +181,6 @@ private fun PortraitCluster(car: CarState, connectionState: ApiConnectionState, 
 
         Spacer(Modifier.height(8.dp))
 
-        // 내비 활성화 시 — 상단에 컴팩트 NavigationCard 표시
-        if (car.activeRouteDestination.isNotBlank()) {
-            NavigationCard(car)
-            Spacer(Modifier.height(12.dp))
-        }
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -197,6 +191,12 @@ private fun PortraitCluster(car: CarState, connectionState: ApiConnectionState, 
         }
 
         CenterGauge(car, modifier = Modifier.fillMaxWidth().weight(1f))
+
+        // 내비 활성화 시 — 속도 게이지 아래에 가로형 NavigationCard 표시 (공간 절약)
+        if (car.activeRouteDestination.isNotBlank()) {
+            NavigationCardCompact(car)
+            Spacer(Modifier.height(12.dp))
+        }
 
         NowPlayingCard(nowPlaying)
         Spacer(Modifier.height(12.dp))
@@ -381,6 +381,108 @@ private fun NavigationCard(car: CarState) {
                 fontSize = 11.sp,
                 color = BatteryYellow,
             )
+        }
+    }
+}
+
+/**
+ * 세로(portrait) 모드용 컴팩트 NavigationCard.
+ * 속도 게이지 아래에 들어가야 해서 vertical 공간이 제한적 — 메트릭을 가로로 나열해 공간 절약.
+ */
+@Composable
+private fun NavigationCardCompact(car: CarState) {
+    val mileToKm = 1.609344
+    val km = car.activeRouteMilesToArrival * mileToKm
+    val minutes = car.activeRouteMinutesToArrival
+    val arrival = computeArrivalTime(minutes)
+    val battery = car.activeRouteEnergyAtArrival
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF1C1C1E), RoundedCornerShape(14.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+    ) {
+        // 헤더: 화살표 + 목적지
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.NearMe,
+                contentDescription = null,
+                tint = ChargingBlue,
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = car.activeRouteDestination,
+                color = TextPrimary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                modifier = Modifier.weight(1f).basicMarquee(),
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+
+        // 가로 메트릭: 남은 거리 / 도착 시간 / 예상 배터리
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            CompactMetric(
+                label = "남은 거리",
+                value = "${formatKm(km)} km",
+                valueColor = TextPrimary,
+                modifier = Modifier.weight(1f),
+            )
+            CompactMetric(
+                label = "도착",
+                value = arrival,
+                sub = if (minutes > 0) "${minutes}분" else null,
+                valueColor = TextPrimary,
+                modifier = Modifier.weight(1f),
+            )
+            CompactMetric(
+                label = "예상 배터리",
+                value = if (battery > 0) "$battery%" else "-",
+                valueColor = batteryColorFor(battery),
+                modifier = Modifier.weight(1f),
+                alignEnd = true,
+            )
+        }
+        if (car.activeRouteTrafficMinutesDelay > 0) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "교통 지연 ${car.activeRouteTrafficMinutesDelay}분",
+                fontSize = 11.sp,
+                color = BatteryYellow,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactMetric(
+    label: String,
+    value: String,
+    valueColor: Color,
+    modifier: Modifier = Modifier,
+    sub: String? = null,
+    alignEnd: Boolean = false,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = if (alignEnd) Alignment.End else Alignment.Start,
+    ) {
+        Text(label, fontSize = 10.sp, color = TextDim)
+        Text(
+            value,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = valueColor,
+            maxLines = 1,
+        )
+        if (sub != null) {
+            Text(sub, fontSize = 10.sp, color = TextDim, maxLines = 1)
         }
     }
 }

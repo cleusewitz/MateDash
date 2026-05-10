@@ -249,6 +249,7 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
                         mediaAlbum = cur.mediaAlbum,
                         mediaPlaylist = cur.mediaPlaylist,
                         mediaStatus = cur.mediaStatus,
+                        mediaArtworkUrl = cur.mediaArtworkUrl,
                         activeRouteDestination = cur.activeRouteDestination,
                         activeRouteMilesToArrival = cur.activeRouteMilesToArrival,
                         activeRouteMinutesToArrival = cur.activeRouteMinutesToArrival,

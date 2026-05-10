@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import com.soooool.matedash.data.persistence.updateLiveActivityState
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 enum class ApiConnectionState { DISCONNECTED, CONNECTING, CONNECTED, ERROR }
 
@@ -42,6 +45,11 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
     val mqttState: StateFlow<MqttConnectionState> = _mqttState.asStateFlow()
     private val _mqttError = MutableStateFlow<String?>(null)
     val mqttError: StateFlow<String?> = _mqttError.asStateFlow()
+
+    // 내비 클리어 디바운스 — TeslaMate가 가끔 transient "no route" 신호를 보내도 즉시 클리어 안 함.
+    // 30초 동안 유효한 destination 신호가 없을 때만 실제 클리어 → 사용자가 명시적으로 취소한 경우 반영.
+    private var pendingClearActiveRouteJob: Job? = null
+    private val activeRouteClearDelayMs = 30_000L
 
     fun requestFastPolling(enabled: Boolean) {
         _fastPollingRequested.value = enabled
@@ -133,6 +141,7 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
                 service.subscribe("teslamate/cars/$carId/+") { topic, payload ->
                     val attr = topic.substringAfterLast('/')
                     _carState.value = _carState.value.applyTeslaMateTopic(attr, payload)
+                    handleActiveRouteDebounce(attr, payload)
                 }
             },
             onError = { msg ->
@@ -145,7 +154,54 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
     fun stopMqtt() {
         mqttService?.disconnect()
         mqttService = null
+        pendingClearActiveRouteJob?.cancel()
+        pendingClearActiveRouteJob = null
         _mqttState.value = MqttConnectionState.DISCONNECTED
+    }
+
+    /**
+     * active_route 토픽을 받을 때마다 호출. 유효한 destination이면 클리어 예약 취소,
+     * 클리어 신호(error/nil)면 30초 뒤 클리어 예약. 30초 안에 유효 신호 오면 자동 취소됨.
+     */
+    private fun handleActiveRouteDebounce(attr: String, payload: String) {
+        if (attr != "active_route" && attr != "active_route_destination") return
+        val isValidSignal = when (attr) {
+            "active_route_destination" -> payload.isNotBlank() && !payload.equals("nil", ignoreCase = true)
+            "active_route" -> isActiveRouteJsonValid(payload)
+            else -> false
+        }
+        if (isValidSignal) {
+            pendingClearActiveRouteJob?.cancel()
+            pendingClearActiveRouteJob = null
+        } else if (_carState.value.activeRouteDestination.isNotBlank()) {
+            pendingClearActiveRouteJob?.cancel()
+            pendingClearActiveRouteJob = scope.launch {
+                kotlinx.coroutines.delay(activeRouteClearDelayMs)
+                if (_carState.value.activeRouteDestination.isNotBlank()) {
+                    _carState.value = _carState.value.copy(
+                        activeRouteDestination = "",
+                        activeRouteMilesToArrival = 0.0,
+                        activeRouteMinutesToArrival = 0,
+                        activeRouteEnergyAtArrival = 0,
+                        activeRouteTrafficMinutesDelay = 0,
+                    )
+                    println("[MateDash] active_route 디바운스 클리어 (${activeRouteClearDelayMs / 1000}초간 신호 없음)")
+                }
+            }
+        }
+    }
+
+    private fun isActiveRouteJsonValid(json: String): Boolean {
+        if (json.isBlank()) return false
+        return try {
+            val obj = kotlinx.serialization.json.Json.parseToJsonElement(json).jsonObject
+            val error = obj["error"]?.jsonPrimitive?.contentOrNull
+            if (!error.isNullOrBlank()) return false
+            val dest = obj["destination"]?.jsonPrimitive?.contentOrNull ?: ""
+            dest.isNotBlank()
+        } catch (_: Exception) {
+            false
+        }
     }
 
     fun startPolling(config: ApiConfig, pollIntervalMs: Long = 30_000L) {

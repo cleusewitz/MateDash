@@ -506,8 +506,10 @@ private fun batteryColorFor(pct: Int): Color = when {
 }
 
 private fun formatKm(km: Double): String {
-    val rounded = (km * 10).roundToInt()
-    return "${rounded / 10}.${kotlin.math.abs(rounded % 10)}"
+    val rounded = (km * 100).roundToInt()
+    val whole = rounded / 100
+    val frac = (kotlin.math.abs(rounded) % 100).toString().padStart(2, '0')
+    return "$whole.$frac"
 }
 
 private fun computeArrivalTime(minutesFromNow: Int): String {

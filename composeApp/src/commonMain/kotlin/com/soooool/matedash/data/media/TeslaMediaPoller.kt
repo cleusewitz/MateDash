@@ -28,10 +28,14 @@ class TeslaMediaPoller(
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var pollingJob: Job? = null
     private val intervalMs = 5_000L // 5초 — 음악/내비 빠른 갱신
+    // 단발 빈 응답에 깜빡이지 않도록 N회 연속 빈 응답일 때만 클리어
+    private var consecutiveBlanks: Int = 0
+    private val blankClearThreshold = 2
 
     fun start(config: TeslaApiConfig) {
         if (config.accessToken.isBlank() || config.vehicleId == 0L) return
         stop()
+        consecutiveBlanks = 0
         pollingJob = scope.launch {
             while (isActive) {
                 tick(config)
@@ -43,6 +47,7 @@ class TeslaMediaPoller(
     fun stop() {
         pollingJob?.cancel()
         pollingJob = null
+        consecutiveBlanks = 0
     }
 
     private suspend fun tick(config: TeslaApiConfig) {
@@ -56,9 +61,9 @@ class TeslaMediaPoller(
             return
         }
         val info = data.vehicleState?.mediaInfo
-        // 제목이 비어있으면 업데이트 자체 skip — 응답에 미디어가 없을 때마다 클리어돼서
-        // NowPlayingCard가 깜빡거리는 문제 방지. (실제 음악이 멈춘 경우는 mediaStatus로 판단)
         if (info != null && info.nowPlayingTitle.isNotBlank()) {
+            consecutiveBlanks = 0
+            // duration/elapsed로만 판정 — title이 있어도 일시정지 상태면 elapsed가 안 움직임
             val isPlaying = info.nowPlayingDuration > 0 &&
                 info.nowPlayingElapsed in 1..(info.nowPlayingDuration - 1)
             repository.updateMediaInfo(
@@ -66,8 +71,15 @@ class TeslaMediaPoller(
                 artist = info.nowPlayingArtist,
                 album = info.nowPlayingAlbum,
                 source = info.nowPlayingSource,
-                isPlaying = isPlaying || info.nowPlayingTitle.isNotBlank(),
+                isPlaying = isPlaying,
             )
+        } else {
+            // 빈 응답이 N회 연속이면 클리어 — 단발 깜빡임 방지하면서 정지/일시정지 반영
+            consecutiveBlanks++
+            val cur = repository.carState.value
+            if (consecutiveBlanks >= blankClearThreshold && cur.mediaTitle.isNotBlank()) {
+                repository.updateMediaInfo(title = "", artist = "", album = "", source = "", isPlaying = false)
+            }
         }
 
         // 같은 응답에서 active_route 정보도 갱신 — TeslaMate MQTT의 느린 폴링 보강 (5초 보장)

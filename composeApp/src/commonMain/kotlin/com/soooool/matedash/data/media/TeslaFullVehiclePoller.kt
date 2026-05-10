@@ -27,6 +27,9 @@ class TeslaFullVehiclePoller(
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var pollingJob: Job? = null
     private var fastMode: Boolean = false
+    // MediaPoller와 동일 — 빈 응답 N회 연속이면 클리어
+    private var consecutiveMediaBlanks: Int = 0
+    private val blankClearThreshold = 2
 
     /** 클러스터 화면 등 빠른 갱신이 필요한 동안 5초 주기로 단축 */
     fun setFastMode(enabled: Boolean) {
@@ -36,6 +39,7 @@ class TeslaFullVehiclePoller(
     fun start(config: TeslaApiConfig) {
         if (config.accessToken.isBlank() || config.vehicleId == 0L) return
         stop()
+        consecutiveMediaBlanks = 0
         pollingJob = scope.launch {
             while (isActive) {
                 tick(config)
@@ -54,6 +58,7 @@ class TeslaFullVehiclePoller(
         pollingJob?.cancel()
         pollingJob = null
         fastMode = false
+        consecutiveMediaBlanks = 0
     }
 
     private suspend fun tick(config: TeslaApiConfig) {
@@ -75,6 +80,8 @@ class TeslaFullVehiclePoller(
             // 미디어도 같은 응답에서 같이 갱신
             val info = data.vehicleState?.mediaInfo
             if (info != null && info.nowPlayingTitle.isNotBlank()) {
+                consecutiveMediaBlanks = 0
+                // duration/elapsed로만 판정 — title이 있어도 일시정지면 elapsed가 안 움직임
                 val isPlaying = info.nowPlayingDuration > 0 &&
                     info.nowPlayingElapsed in 1..(info.nowPlayingDuration - 1)
                 repository.updateMediaInfo(
@@ -82,8 +89,15 @@ class TeslaFullVehiclePoller(
                     artist = info.nowPlayingArtist,
                     album = info.nowPlayingAlbum,
                     source = info.nowPlayingSource,
-                    isPlaying = isPlaying || info.nowPlayingTitle.isNotBlank(),
+                    isPlaying = isPlaying,
                 )
+            } else {
+                // 빈 응답 N회 연속이면 클리어 — 정지/일시정지 반영
+                consecutiveMediaBlanks++
+                val cur = repository.carState.value
+                if (consecutiveMediaBlanks >= blankClearThreshold && cur.mediaTitle.isNotBlank()) {
+                    repository.updateMediaInfo(title = "", artist = "", album = "", source = "", isPlaying = false)
+                }
             }
         } catch (e: Exception) {
             println("[MateDash] TeslaFullVehiclePoller: tick error=${e.message}")

@@ -152,11 +152,16 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
             mediaArtworkUrl = if (isNewSong) "" else cur.mediaArtworkUrl,
         )
         if (isNewSong && title.isNotBlank()) {
+            println("[MateDash] iTunes 검색 시작: title='$title' artist='$artist'")
             scope.launch {
                 val url = com.soooool.matedash.ServiceLocator.itunesSearchClient.findArtworkUrl(title, artist)
-                // 검색 동안 곡이 또 바뀌었을 수 있음 — 현재 곡과 일치할 때만 적용
                 val now = _carState.value
-                if (url.isNotBlank() && now.mediaTitle == title && now.mediaArtist == artist) {
+                if (url.isBlank()) {
+                    println("[MateDash] iTunes 검색 결과 없음")
+                } else if (now.mediaTitle != title || now.mediaArtist != artist) {
+                    println("[MateDash] iTunes 결과 도착했으나 그 사이 곡 바뀜 — 무시")
+                } else {
+                    println("[MateDash] iTunes artworkUrl 적용: $url")
                     _carState.value = now.copy(mediaArtworkUrl = url)
                 }
             }

@@ -181,6 +181,12 @@ private fun PortraitCluster(car: CarState, connectionState: ApiConnectionState, 
 
         Spacer(Modifier.height(8.dp))
 
+        // 내비 활성화 시 — 상단에 컴팩트 NavigationCard 표시
+        if (car.activeRouteDestination.isNotBlank()) {
+            NavigationCard(car)
+            Spacer(Modifier.height(12.dp))
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -195,23 +201,26 @@ private fun PortraitCluster(car: CarState, connectionState: ApiConnectionState, 
         NowPlayingCard(nowPlaying)
         Spacer(Modifier.height(12.dp))
 
+        // 하단 위치/속도 정보 — geofence 비어있으면 좌표로 폴백, 주행 중이면 속도로
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Column {
                 Text("위치", fontSize = 10.sp, color = TextMuted)
-                Text(
-                    car.geofence.ifEmpty { "-" },
-                    fontSize = 14.sp, color = TextPrimary, fontWeight = FontWeight.Medium,
-                )
+                val locText = when {
+                    car.geofence.isNotBlank() -> car.geofence
+                    car.latitude != 0.0 && car.longitude != 0.0 -> "${formatCoord(car.latitude)}, ${formatCoord(car.longitude)}"
+                    else -> "-"
+                }
+                Text(locText, fontSize = 14.sp, color = TextPrimary, fontWeight = FontWeight.Medium, maxLines = 1)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("잠금", fontSize = 10.sp, color = TextMuted)
+                Text("주행", fontSize = 10.sp, color = TextMuted)
                 Text(
-                    if (car.isLocked) "잠김" else "열림",
+                    if (car.speed > 0) "${car.speed} km/h" else "정차",
                     fontSize = 14.sp,
-                    color = if (car.isLocked) TextDim else BatteryYellow,
+                    color = TextPrimary,
                     fontWeight = FontWeight.Medium,
                 )
             }
@@ -220,6 +229,13 @@ private fun PortraitCluster(car: CarState, connectionState: ApiConnectionState, 
         Spacer(Modifier.height(8.dp))
         BottomBar(car)
     }
+}
+
+private fun formatCoord(d: Double): String {
+    val rounded = (d * 10000).roundToInt()
+    val whole = rounded / 10000
+    val frac = (kotlin.math.abs(rounded) % 10000).toString().padStart(4, '0')
+    return "$whole.$frac"
 }
 
 // ── 상단 상태바 ──

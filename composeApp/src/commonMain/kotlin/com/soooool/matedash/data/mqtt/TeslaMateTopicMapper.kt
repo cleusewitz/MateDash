@@ -28,6 +28,10 @@ fun CarState.applyTeslaMateTopic(attr: String, raw: String): CarState {
         "usable_battery_level" -> i?.let { copy(usableBatteryLevel = it) } ?: this
         "est_battery_range_km" -> d?.let { copy(estBatteryRangeKm = it) } ?: this
         "rated_battery_range_km" -> d?.let { copy(ratedBatteryRangeKm = it) } ?: this
+        // ideal_battery_range_km — TeslaMate v3에서 publish됨. est가 0인 환경 대비 fallback으로 ratedBatteryRangeKm에 같이 채움.
+        "ideal_battery_range_km" -> d?.let {
+            if (ratedBatteryRangeKm <= 0.0) copy(ratedBatteryRangeKm = it) else this
+        } ?: this
         "charge_limit_soc" -> i?.let { copy(chargeLimitSoc = it) } ?: this
         "plugged_in" -> copy(isPluggedIn = b)
         "charging_state" -> copy(chargingState = s)

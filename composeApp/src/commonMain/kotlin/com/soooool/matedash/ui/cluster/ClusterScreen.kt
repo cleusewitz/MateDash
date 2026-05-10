@@ -634,8 +634,14 @@ private fun BottomBar(car: CarState) {
                         .background(batColor, RoundedCornerShape(2.dp)),
                 )
             }
+            // est가 0이면 rated로 폴백 — 차량/TeslaMate 환경에 따라 한쪽만 채워지는 경우가 있음
+            val displayRangeKm = when {
+                car.estBatteryRangeKm > 0.0 -> car.estBatteryRangeKm
+                car.ratedBatteryRangeKm > 0.0 -> car.ratedBatteryRangeKm
+                else -> 0.0
+            }
             Text(
-                "${car.batteryLevel}% / ${car.estBatteryRangeKm.toDisplayKm()}",
+                "${car.batteryLevel}% / ${displayRangeKm.toDisplayKm()}",
                 fontSize = 12.sp,
                 color = batColor,
             )

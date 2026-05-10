@@ -56,8 +56,10 @@ class TeslaMediaPoller(
             return
         }
         val info = data.vehicleState?.mediaInfo
-        if (info != null) {
-            val isPlaying = info.nowPlayingTitle.isNotBlank() && info.nowPlayingDuration > 0 &&
+        // 제목이 비어있으면 업데이트 자체 skip — 응답에 미디어가 없을 때마다 클리어돼서
+        // NowPlayingCard가 깜빡거리는 문제 방지. (실제 음악이 멈춘 경우는 mediaStatus로 판단)
+        if (info != null && info.nowPlayingTitle.isNotBlank()) {
+            val isPlaying = info.nowPlayingDuration > 0 &&
                 info.nowPlayingElapsed in 1..(info.nowPlayingDuration - 1)
             repository.updateMediaInfo(
                 title = info.nowPlayingTitle,

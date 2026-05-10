@@ -141,11 +141,26 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
             while (isActive) {
                 try {
                     val dto = apiClient.getCarStatus(config)
-                    val newState = dto.toCarState()
-                    _carState.value = newState
+                    val rest = dto.toCarState()
+                    // REST API는 active_route/media 정보를 안 주므로 기존(MQTT/Fleet API에서 채워진) 값 보존.
+                    // 그대로 _carState.value = rest 하면 매 5/30초마다 미디어/내비가 빈 값으로 클리어 → 깜빡임.
+                    val cur = _carState.value
+                    val merged = rest.copy(
+                        mediaTitle = cur.mediaTitle,
+                        mediaArtist = cur.mediaArtist,
+                        mediaAlbum = cur.mediaAlbum,
+                        mediaPlaylist = cur.mediaPlaylist,
+                        mediaStatus = cur.mediaStatus,
+                        activeRouteDestination = cur.activeRouteDestination,
+                        activeRouteMilesToArrival = cur.activeRouteMilesToArrival,
+                        activeRouteMinutesToArrival = cur.activeRouteMinutesToArrival,
+                        activeRouteEnergyAtArrival = cur.activeRouteEnergyAtArrival,
+                        activeRouteTrafficMinutesDelay = cur.activeRouteTrafficMinutesDelay,
+                    )
+                    _carState.value = merged
                     _connectionState.value = ApiConnectionState.CONNECTED
                     _errorMessage.value = null
-                    updateLiveActivityState(newState)
+                    updateLiveActivityState(merged)
                 } catch (e: Exception) {
                     _connectionState.value = ApiConnectionState.ERROR
                     _errorMessage.value = e.message ?: "데이터 수신 실패"

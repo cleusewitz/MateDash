@@ -275,15 +275,13 @@ private fun LeftPanel(car: CarState, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
     ) {
         if (car.activeRouteDestination.isNotBlank()) {
-            // 내비게이션 활성화 시 — NavigationCard만 표시 (속도는 중앙 게이지에 있음)
+            // 내비 활성화 시 — NavigationCard만 표시. 전력은 오른쪽 음악 아래로 이동.
             NavigationCard(car)
         } else {
             if (car.geofence.isNotEmpty()) {
                 Text(car.geofence, fontSize = 16.sp, color = TextPrimary, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(16.dp))
             }
-            InfoLabel("전력", "${car.power} kW", valueColor = if (car.power < 0) BatteryGreen else Color(0xFFFF9500))
-            Spacer(Modifier.height(14.dp))
             InfoLabel("속도", "${car.speed} km/h")
             Spacer(Modifier.height(14.dp))
             InfoLabel("방위", "${headingToDirection(car.heading)} ${car.heading}°")
@@ -390,9 +388,13 @@ private fun computeArrivalTime(minutesFromNow: Int): String {
 
 @Composable
 private fun RightPanelContent(car: CarState) {
-    InfoLabel("잠금", if (car.isLocked) "잠김" else "열림", align = Alignment.End)
-    Spacer(Modifier.height(14.dp))
-    InfoLabel("감시 모드", if (car.sentryMode) "켜짐" else "꺼짐", align = Alignment.End)
+    // 전력 — 음악 카드 바로 아래에 배치 (구 LeftPanel에서 옮김). 회생 시 초록, 가속 시 주황.
+    InfoLabel(
+        label = "전력",
+        value = "${car.power} kW",
+        valueColor = if (car.power < 0) BatteryGreen else Color(0xFFFF9500),
+        align = Alignment.End,
+    )
     Spacer(Modifier.height(14.dp))
 
     if (car.chargingState.lowercase() == "charging") {
@@ -403,11 +405,8 @@ private fun RightPanelContent(car: CarState) {
             val m = ((car.timeToFullCharge - h) * 60).roundToInt()
             val timeStr = if (h > 0) "${h}시간 ${m}분" else "${m}분"
             InfoLabel("완충까지", timeStr, align = Alignment.End)
-            Spacer(Modifier.height(14.dp))
         }
     }
-
-    InfoLabel("문", if (car.doorsOpen) "열림" else "닫힘", align = Alignment.End)
 }
 
 @Composable

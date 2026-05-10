@@ -44,6 +44,7 @@ actual fun saveAppSettings(settings: AppSettings) {
         ?.putInt("mqtt_port", settings.mqttPort)
         ?.putString("mqtt_username", settings.mqttUsername)
         ?.putString("mqtt_password", settings.mqttPassword)
+        ?.putFloat("cluster_font_scale", settings.clusterFontScale)
         ?.apply()
 }
 
@@ -65,5 +66,6 @@ actual fun loadAppSettings(): AppSettings {
         mqttPort = p.getInt("mqtt_port", 1883),
         mqttUsername = p.getString("mqtt_username", "") ?: "",
         mqttPassword = p.getString("mqtt_password", "") ?: "",
+        clusterFontScale = p.getFloat("cluster_font_scale", 1.0f),
     )
 }

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.ElectricCar
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
@@ -39,6 +40,7 @@ import com.soooool.matedash.getPlatform
 private enum class SettingsRoute {
     CONNECTION,
     TESLA_API,
+    CLUSTER,
     LIVE_ACTIVITY,
     DISPLAY,
     NAVIGATION,
@@ -59,6 +61,9 @@ fun SettingsScreen(onDisconnect: () -> Unit) {
             onDisconnect = onDisconnect,
         )
         SettingsRoute.TESLA_API -> TeslaApiSettingsScreen(
+            onBack = { currentRoute = null },
+        )
+        SettingsRoute.CLUSTER -> ClusterSettingsScreen(
             onBack = { currentRoute = null },
         )
         SettingsRoute.LIVE_ACTIVITY -> LiveActivitySettingsScreen(
@@ -161,6 +166,13 @@ private fun SettingsMenuScreen(
                 )
                 HorizontalDivider(color = Color(0xFF2C2C2E), thickness = 0.5.dp)
             }
+            SettingsMenuItem(
+                icon = Icons.Filled.Speed,
+                title = "클러스터",
+                description = "글씨 크기 조절",
+                onClick = { onNavigate(SettingsRoute.CLUSTER) },
+            )
+            HorizontalDivider(color = Color(0xFF2C2C2E), thickness = 0.5.dp)
             SettingsMenuItem(
                 icon = Icons.Filled.Tune,
                 title = "표시 설정",

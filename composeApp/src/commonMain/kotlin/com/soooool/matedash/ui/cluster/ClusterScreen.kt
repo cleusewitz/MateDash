@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -85,6 +86,17 @@ fun ClusterScreen(
         )
     } else null
 
+    // 사용자 설정 글씨 크기 적용 (Settings → 클러스터)
+    val settings by com.soooool.matedash.ServiceLocator.settingsFlow.collectAsState()
+    val baseDensity = androidx.compose.ui.platform.LocalDensity.current
+    val scaledDensity = androidx.compose.ui.unit.Density(
+        density = baseDensity.density,
+        fontScale = baseDensity.fontScale * settings.clusterFontScale,
+    )
+
+    androidx.compose.runtime.CompositionLocalProvider(
+        androidx.compose.ui.platform.LocalDensity provides scaledDensity,
+    ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -121,6 +133,7 @@ fun ClusterScreen(
             }
         }
     }
+    } // CompositionLocalProvider 종료
 }
 
 @Composable

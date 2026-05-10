@@ -26,6 +26,7 @@ actual fun saveAppSettings(settings: AppSettings) {
     d.setInteger(settings.mqttPort.toLong(), forKey = "settings_mqtt_port")
     d.setObject(settings.mqttUsername, forKey = "settings_mqtt_username")
     d.setObject(settings.mqttPassword, forKey = "settings_mqtt_password")
+    d.setFloat(settings.clusterFontScale, forKey = "settings_cluster_font_scale")
     d.synchronize()
 }
 
@@ -49,5 +50,6 @@ actual fun loadAppSettings(): AppSettings {
         mqttPort = d.integerForKey("settings_mqtt_port").toInt().let { if (it == 0) 1883 else it },
         mqttUsername = d.stringForKey("settings_mqtt_username") ?: "",
         mqttPassword = d.stringForKey("settings_mqtt_password") ?: "",
+        clusterFontScale = d.floatForKey("settings_cluster_font_scale").let { if (it <= 0f) 1.0f else it },
     )
 }

@@ -22,6 +22,8 @@ data class AppSettings(
     val mqttPort: Int = 1883,
     val mqttUsername: String = "",
     val mqttPassword: String = "",
+    // 클러스터 화면
+    val clusterFontScale: Float = 1.0f, // 0.8 ~ 1.5
 )
 
 enum class DistanceUnit(val label: String) {

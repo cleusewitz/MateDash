@@ -192,11 +192,9 @@ private fun PortraitCluster(car: CarState, connectionState: ApiConnectionState, 
 
         CenterGauge(car, modifier = Modifier.fillMaxWidth().weight(1f))
 
-        // 내비 활성화 시 — 속도 게이지 아래에 가로형 NavigationCard 표시 (공간 절약)
-        if (car.activeRouteDestination.isNotBlank()) {
-            NavigationCardCompact(car)
-            Spacer(Modifier.height(12.dp))
-        }
+        // NowPlayingCard처럼 항상 표시 — 목적지 미설정 시엔 현재 위치를 헤더로 보여주고 메트릭은 "-"
+        NavigationCardCompact(car)
+        Spacer(Modifier.height(12.dp))
 
         NowPlayingCard(nowPlaying)
         Spacer(Modifier.height(12.dp))
@@ -387,15 +385,28 @@ private fun NavigationCard(car: CarState) {
 
 /**
  * 세로(portrait) 모드용 컴팩트 NavigationCard.
- * 속도 게이지 아래에 들어가야 해서 vertical 공간이 제한적 — 메트릭을 가로로 나열해 공간 절약.
+ * NowPlayingCard처럼 항상 표시 — 목적지가 있으면 목적지를, 없으면 현재 위치를 헤더로 보여주고
+ * 메트릭은 "-"로 채운다. vertical 공간이 제한적이라 메트릭은 가로 나열.
  */
 @Composable
 private fun NavigationCardCompact(car: CarState) {
+    val hasRoute = car.activeRouteDestination.isNotBlank()
     val mileToKm = 1.609344
     val km = car.activeRouteMilesToArrival * mileToKm
     val minutes = car.activeRouteMinutesToArrival
-    val arrival = computeArrivalTime(minutes)
     val battery = car.activeRouteEnergyAtArrival
+
+    val headerText = if (hasRoute) {
+        car.activeRouteDestination
+    } else {
+        when {
+            car.geofence.isNotBlank() -> car.geofence
+            car.latitude != 0.0 && car.longitude != 0.0 ->
+                "${formatCoord(car.latitude)}, ${formatCoord(car.longitude)}"
+            else -> "현재 위치"
+        }
+    }
+    val headerTint = if (hasRoute) ChargingBlue else TextDim
 
     Column(
         modifier = Modifier
@@ -403,17 +414,17 @@ private fun NavigationCardCompact(car: CarState) {
             .background(Color(0xFF1C1C1E), RoundedCornerShape(14.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        // 헤더: 화살표 + 목적지
+        // 헤더: 화살표 + 목적지(또는 현재 위치)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Filled.NearMe,
                 contentDescription = null,
-                tint = ChargingBlue,
+                tint = headerTint,
                 modifier = Modifier.size(16.dp),
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = car.activeRouteDestination,
+                text = headerText,
                 color = TextPrimary,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -430,26 +441,26 @@ private fun NavigationCardCompact(car: CarState) {
         ) {
             CompactMetric(
                 label = "남은 거리",
-                value = "${formatKm(km)} km",
-                valueColor = TextPrimary,
+                value = if (hasRoute) "${formatKm(km)} km" else "-",
+                valueColor = if (hasRoute) TextPrimary else TextDim,
                 modifier = Modifier.weight(1f),
             )
             CompactMetric(
                 label = "도착",
-                value = arrival,
-                sub = if (minutes > 0) "${minutes}분" else null,
-                valueColor = TextPrimary,
+                value = if (hasRoute) computeArrivalTime(minutes) else "-",
+                sub = if (hasRoute && minutes > 0) "${minutes}분" else null,
+                valueColor = if (hasRoute) TextPrimary else TextDim,
                 modifier = Modifier.weight(1f),
             )
             CompactMetric(
                 label = "예상 배터리",
-                value = if (battery > 0) "$battery%" else "-",
-                valueColor = batteryColorFor(battery),
+                value = if (hasRoute && battery > 0) "$battery%" else "-",
+                valueColor = if (hasRoute) batteryColorFor(battery) else TextDim,
                 modifier = Modifier.weight(1f),
                 alignEnd = true,
             )
         }
-        if (car.activeRouteTrafficMinutesDelay > 0) {
+        if (hasRoute && car.activeRouteTrafficMinutesDelay > 0) {
             Spacer(Modifier.height(4.dp))
             Text(
                 "교통 지연 ${car.activeRouteTrafficMinutesDelay}분",

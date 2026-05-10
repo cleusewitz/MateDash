@@ -64,9 +64,16 @@ fun CarState.applyTeslaMateTopic(attr: String, raw: String): CarState {
         "media_album" -> copy(mediaAlbum = s)
         "media_playlist" -> copy(mediaPlaylist = s)
         "media_status" -> copy(mediaStatus = s)
-        // active_route — JSON 한 덩어리에 destination/도착시간/거리/배터리 등이 들어옴
-        // No active route 시: {"error":"No active route available"} → 필드 클리어
-        "active_route" -> parseActiveRoute(s) ?: clearActiveRoute()
+        // active_route — JSON 한 덩어리에 destination/도착시간/거리/배터리 등이 들어옴.
+        // 주행 중 TeslaMate가 가끔 "No active route available" 에러 JSON을 publish하는 경우가 있어
+        // 즉시 클리어하면 NavigationCard ↔ 일반 LeftPanel이 깜빡거림.
+        // 보수적으로 처리: 유효한 destination일 때만 업데이트, 에러/nil은 모두 무시.
+        // 명시적 클리어는 다른 destination이 들어오거나 앱 재시작 시점에만 발생.
+        "active_route" -> parseActiveRoute(s) ?: this
+        "active_route_destination" -> {
+            val cleared = s.isBlank() || s.equals("nil", ignoreCase = true)
+            if (cleared) this else copy(activeRouteDestination = s)
+        }
         else -> this
     }
 }

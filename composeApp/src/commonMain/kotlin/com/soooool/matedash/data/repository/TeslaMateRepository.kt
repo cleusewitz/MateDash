@@ -102,8 +102,8 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
     fun updateActiveRouteFromFleet(ds: com.soooool.matedash.data.api.TeslaDriveState?) {
         if (ds == null) return
         val dest = ds.activeRouteDestination
-        // 유효한 destination이 있을 때만 갱신. nil/blank는 클리어 디바운스 로직이 처리.
         if (!dest.isNullOrBlank()) {
+            // 유효한 destination — 즉시 적용 + 클리어 예약 취소
             _carState.value = _carState.value.copy(
                 activeRouteDestination = dest,
                 activeRouteMilesToArrival = ds.activeRouteMilesToArrival ?: 0.0,
@@ -111,9 +111,29 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
                 activeRouteEnergyAtArrival = ds.activeRouteEnergyAtArrival ?: 0,
                 activeRouteTrafficMinutesDelay = ds.activeRouteTrafficMinutesDelay?.toInt() ?: 0,
             )
-            // 유효 신호 받았으니 디바운스 클리어 예약 취소
             pendingClearActiveRouteJob?.cancel()
             pendingClearActiveRouteJob = null
+        } else if (_carState.value.activeRouteDestination.isNotBlank()) {
+            // Fleet API에서도 destination이 비어있고 우리는 표시 중인 destination이 있음 → 사용자 취소 가능성
+            // 디바운스 예약 (이미 잡혀있으면 갱신 안 함, MQTT 쪽이 먼저 잡았을 수 있음)
+            scheduleActiveRouteClearIfNeeded()
+        }
+    }
+
+    private fun scheduleActiveRouteClearIfNeeded() {
+        if (pendingClearActiveRouteJob?.isActive == true) return
+        pendingClearActiveRouteJob = scope.launch {
+            kotlinx.coroutines.delay(activeRouteClearDelayMs)
+            if (_carState.value.activeRouteDestination.isNotBlank()) {
+                _carState.value = _carState.value.copy(
+                    activeRouteDestination = "",
+                    activeRouteMilesToArrival = 0.0,
+                    activeRouteMinutesToArrival = 0,
+                    activeRouteEnergyAtArrival = 0,
+                    activeRouteTrafficMinutesDelay = 0,
+                )
+                println("[MateDash] active_route 디바운스 클리어 (${activeRouteClearDelayMs / 1000}초간 신호 없음)")
+            }
         }
     }
 
@@ -193,21 +213,8 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
         if (isValidSignal) {
             pendingClearActiveRouteJob?.cancel()
             pendingClearActiveRouteJob = null
-        } else if (_carState.value.activeRouteDestination.isNotBlank()) {
-            pendingClearActiveRouteJob?.cancel()
-            pendingClearActiveRouteJob = scope.launch {
-                kotlinx.coroutines.delay(activeRouteClearDelayMs)
-                if (_carState.value.activeRouteDestination.isNotBlank()) {
-                    _carState.value = _carState.value.copy(
-                        activeRouteDestination = "",
-                        activeRouteMilesToArrival = 0.0,
-                        activeRouteMinutesToArrival = 0,
-                        activeRouteEnergyAtArrival = 0,
-                        activeRouteTrafficMinutesDelay = 0,
-                    )
-                    println("[MateDash] active_route 디바운스 클리어 (${activeRouteClearDelayMs / 1000}초간 신호 없음)")
-                }
-            }
+        } else {
+            scheduleActiveRouteClearIfNeeded()
         }
     }
 

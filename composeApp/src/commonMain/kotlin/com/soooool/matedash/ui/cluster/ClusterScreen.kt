@@ -586,8 +586,12 @@ private fun SpeedArc(
 private fun GearIndicator(shiftState: String) {
     val gears = listOf("P", "R", "N", "D")
     val current = shiftState.uppercase().takeIf { it in gears } ?: "P"
+    // fontScale에 비례해 박스 크기도 같이 늘림 (150%일 때 박스가 텍스트보다 작아 우측 치우침 방지)
+    val fontScale = androidx.compose.ui.platform.LocalDensity.current.fontScale
+    val boxSize = (28 * fontScale).dp
+    val gap = (8 * fontScale).dp
 
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
         gears.forEach { gear ->
             val isActive = gear == current
             val activeColor = when (gear) {
@@ -595,11 +599,9 @@ private fun GearIndicator(shiftState: String) {
                 "D" -> BatteryGreen
                 else -> TextPrimary
             }
-            // 같은 크기의 박스로 모든 글자를 동일한 width/height로 잡아 레이아웃 흔들림 방지.
-            // 활성화된 기어만 컬러 박스로 감싸 강조.
             Box(
                 modifier = Modifier
-                    .size(width = 28.dp, height = 28.dp)
+                    .size(width = boxSize, height = boxSize)
                     .background(
                         color = if (isActive) activeColor else Color.Transparent,
                         shape = RoundedCornerShape(6.dp),

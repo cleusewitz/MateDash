@@ -5,7 +5,8 @@ import ComposeApp
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
         let vc = MainViewControllerKt.MainViewController()
-        vc.view.backgroundColor = UIColor(red: 0.043, green: 0.043, blue: 0.043, alpha: 1) // 0xFF0B0B0B
+        // 스플래시 LaunchBackground와 동일한 dark navy (#050508)
+        vc.view.backgroundColor = UIColor(red: 5/255.0, green: 5/255.0, blue: 8/255.0, alpha: 1)
         return vc
     }
 
@@ -18,7 +19,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            Color(red: 0.043, green: 0.043, blue: 0.043)
+            Color(red: 5/255.0, green: 5/255.0, blue: 8/255.0)
                 .ignoresSafeArea()
 
             // ComposeView를 백그라운드에서 시작시키고, 그 위에 스플래시를 덮어 자연스러운
@@ -30,16 +31,21 @@ struct ContentView: View {
             }
 
             if !splashFaded {
-                VStack(spacing: 16) {
+                VStack(spacing: 18) {
+                    Image("SplashLogo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 200, height: 200)
+                        .cornerRadius(44)
                     Text("MateDash")
-                        .font(.system(size: 36, weight: .bold))
+                        .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
                     Text("Tesla 차량 대시보드")
                         .font(.system(size: 13))
                         .foregroundColor(Color(white: 0.6))
                     ProgressView()
                         .tint(.white)
-                        .padding(.top, 20)
+                        .padding(.top, 12)
                 }
                 .transition(.opacity)
             }

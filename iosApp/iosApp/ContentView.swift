@@ -31,23 +31,11 @@ struct ContentView: View {
             }
 
             if !splashFaded {
-                VStack(spacing: 18) {
-                    Image("SplashLogo")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 200, height: 200)
-                        .cornerRadius(44)
-                    Text("MateDash")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.white)
-                    Text("Tesla 차량 대시보드")
-                        .font(.system(size: 13))
-                        .foregroundColor(Color(white: 0.6))
-                    ProgressView()
-                        .tint(.white)
-                        .padding(.top, 12)
-                }
-                .transition(.opacity)
+                Image("SplashFull")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
             }
         }
         .onAppear {

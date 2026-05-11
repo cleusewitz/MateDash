@@ -3,8 +3,8 @@
     <item android:drawable="@color/splash_bg" />
     <item>
         <bitmap
-            android:src="@drawable/splash_icon"
-            android:gravity="center"
+            android:src="@drawable/splash_portrait"
+            android:gravity="fill"
             android:tileMode="disabled" />
     </item>
 </layer-list>

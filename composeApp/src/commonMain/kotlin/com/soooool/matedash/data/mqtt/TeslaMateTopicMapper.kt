@@ -90,11 +90,14 @@ private fun CarState.parseActiveRoute(json: String): CarState? {
         if (!error.isNullOrBlank()) return null
         val dest = obj["destination"]?.jsonPrimitive?.contentOrNull ?: ""
         if (dest.isBlank()) return null
+        val miles = obj["miles_to_arrival"]?.jsonPrimitive?.doubleOrNull ?: 0.0
+        val mins = obj["minutes_to_arrival"]?.jsonPrimitive?.doubleOrNull?.toInt()
+            ?: obj["minutes_to_arrival"]?.jsonPrimitive?.intOrNull ?: 0
+        println("[MateDash] active_route src=MQTT miles=$miles mins=$mins dest='$dest'")
         copy(
             activeRouteDestination = dest,
-            activeRouteMilesToArrival = obj["miles_to_arrival"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
-            activeRouteMinutesToArrival = obj["minutes_to_arrival"]?.jsonPrimitive?.doubleOrNull?.toInt()
-                ?: obj["minutes_to_arrival"]?.jsonPrimitive?.intOrNull ?: 0,
+            activeRouteMilesToArrival = miles,
+            activeRouteMinutesToArrival = mins,
             activeRouteEnergyAtArrival = obj["energy_at_arrival"]?.jsonPrimitive?.intOrNull ?: 0,
             activeRouteTrafficMinutesDelay = obj["traffic_minutes_delay"]?.jsonPrimitive?.doubleOrNull?.toInt()
                 ?: obj["traffic_minutes_delay"]?.jsonPrimitive?.intOrNull ?: 0,

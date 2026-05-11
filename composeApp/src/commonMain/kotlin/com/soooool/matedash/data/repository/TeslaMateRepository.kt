@@ -103,11 +103,14 @@ class TeslaMateRepository(private val apiClient: TeslaMateApiClient) {
         if (ds == null) return
         val dest = ds.activeRouteDestination
         if (!dest.isNullOrBlank()) {
+            val miles = ds.activeRouteMilesToArrival ?: 0.0
+            val mins = ds.activeRouteMinutesToArrival?.toInt() ?: 0
+            println("[MateDash] active_route src=Fleet miles=$miles mins=$mins dest='$dest'")
             // 유효한 destination — 즉시 적용 + 클리어 예약 취소
             _carState.value = _carState.value.copy(
                 activeRouteDestination = dest,
-                activeRouteMilesToArrival = ds.activeRouteMilesToArrival ?: 0.0,
-                activeRouteMinutesToArrival = ds.activeRouteMinutesToArrival?.toInt() ?: 0,
+                activeRouteMilesToArrival = miles,
+                activeRouteMinutesToArrival = mins,
                 activeRouteEnergyAtArrival = ds.activeRouteEnergyAtArrival ?: 0,
                 activeRouteTrafficMinutesDelay = ds.activeRouteTrafficMinutesDelay?.toInt() ?: 0,
             )

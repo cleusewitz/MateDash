@@ -51,9 +51,11 @@ class TeslaMediaPoller(
     }
 
     private suspend fun tick(config: TeslaApiConfig) {
-        // 차가 online일 때만 폴링 (asleep 상태에서 vehicle_data 호출 시 깨우는 부작용 방지)
+        // asleep/offline일 때만 스킵 (vehicle_data 호출이 차량 깨우는 부작용 방지).
+        // driving/charging/suspended 등 활성 상태에선 폴링 필수 — 그래야 주행 중 곡 변경이 반영됨.
         val carState = repository.carState.value
-        if (carState.state.lowercase() != "online") return
+        val s = carState.state.lowercase()
+        if (s == "asleep" || s == "offline") return
         val data = try {
             fetchWithRefresh(config)
         } catch (e: Exception) {
